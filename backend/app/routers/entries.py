@@ -79,21 +79,35 @@ def _append_text(old: str, new: str, sep: str = "\n") -> str:
     return f"{old}{sep}{new}" if old else new
 
 
+def _merged_fields(entry: Entry, draft: EntryCreate) -> dict:
+    """The combined values. Pure (no DB writes), so preview and real merge share one rule set."""
+    return {
+        "situation": _append_text(entry.situation, draft.situation),
+        "what_happens": _append_text(entry.what_happens, draft.what_happens),
+        "notes": _append_text(entry.notes, draft.notes),
+        "to_do": _union(entry.to_do, draft.to_do),
+        "to_avoid": _union(entry.to_avoid, draft.to_avoid),
+        "tags": _union(entry.tags, draft.tags),
+        "source_text": _append_text(entry.source_text, draft.source_text, sep="\n---\n"),
+    }
+
+
 @router.post("/{entry_id}/merge", response_model=EntryRead)
-def merge_entry(entry_id: int, body: EntryCreate, db: Session = Depends(get_db)):
+def merge_entry(entry_id: int, body: EntryCreate, preview: bool = False, db: Session = Depends(get_db)):
     """Fold a new draft into an existing entry without losing anything.
 
     Plain rules instead of asking the LLM to merge: predictable, testable, and free.
     Title and kind stay as they were; lists are unioned; text is appended.
+
+    `preview=true` returns the combined entry WITHOUT saving, so the user can remove
+    anything that's no longer true (merging alone can only add) and then save via PATCH.
     """
     entry = _get_or_404(db, entry_id)
-    entry.situation = _append_text(entry.situation, body.situation)
-    entry.what_happens = _append_text(entry.what_happens, body.what_happens)
-    entry.notes = _append_text(entry.notes, body.notes)
-    entry.to_do = _union(entry.to_do, body.to_do)
-    entry.to_avoid = _union(entry.to_avoid, body.to_avoid)
-    entry.tags = _union(entry.tags, body.tags)
-    entry.source_text = _append_text(entry.source_text, body.source_text, sep="\n---\n")
+    fields = _merged_fields(entry, body)
+    if preview:
+        return EntryRead.model_validate(entry).model_copy(update=fields)
+    for field, value in fields.items():
+        setattr(entry, field, value)
     db.commit()
     db.refresh(entry)
     return entry
