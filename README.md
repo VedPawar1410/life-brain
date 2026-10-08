@@ -24,4 +24,27 @@ A personal "second brain" for the things you learn about **your own body and lif
 5. Learning loop (history, "save what worked")
 6. Phone polish (PWA, voice input)
 
-Setup instructions are added as each part lands.
+## Running locally
+
+### Backend
+Requires Postgres running locally and [uv](https://docs.astral.sh/uv/).
+
+```bash
+createdb life_brain && createdb life_brain_test
+cd backend
+cp .env.example .env
+uv sync
+uv run python -m app.seed          # optional: 2 generic example entries
+uv run uvicorn app.main:app --reload
+```
+
+API docs: http://localhost:8000/docs · Tests: `uv run pytest`
+
+### Entries API
+| Method | Path | Notes |
+|---|---|---|
+| GET | `/entries?q=&tag=` | newest first; `q` = text search, `tag` = exact tag |
+| POST | `/entries` | create |
+| GET | `/entries/{id}` | |
+| PATCH | `/entries/{id}` | only fields you send are changed |
+| DELETE | `/entries/{id}` | |
