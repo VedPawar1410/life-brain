@@ -1,0 +1,58 @@
+// Thin typed wrapper around the FastAPI backend. Every network call lives here.
+
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+
+export const ENTRY_KINDS = ["issue", "remedy", "routine", "preference", "fact"] as const;
+export type EntryKind = (typeof ENTRY_KINDS)[number];
+
+export type EntryInput = {
+  title: string;
+  kind: EntryKind;
+  situation: string;
+  what_happens: string;
+  to_do: string[];
+  to_avoid: string[];
+  notes: string;
+  tags: string[];
+  source_text: string;
+};
+
+export type Entry = EntryInput & {
+  id: number;
+  created_at: string;
+  updated_at: string;
+};
+
+export const emptyEntry: EntryInput = {
+  title: "",
+  kind: "issue",
+  situation: "",
+  what_happens: "",
+  to_do: [],
+  to_avoid: [],
+  notes: "",
+  tags: [],
+  source_text: "",
+};
+
+async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(`${API_URL}${path}`, {
+    ...init,
+    headers: { "Content-Type": "application/json", ...init?.headers },
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => null);
+    throw new Error(body?.detail ? JSON.stringify(body.detail) : `Request failed (${res.status})`);
+  }
+  return (res.status === 204 ? undefined : await res.json()) as T;
+}
+
+export const api = {
+  listEntries: () => request<Entry[]>("/entries"),
+  getEntry: (id: number) => request<Entry>(`/entries/${id}`),
+  createEntry: (data: EntryInput) =>
+    request<Entry>("/entries", { method: "POST", body: JSON.stringify(data) }),
+  updateEntry: (id: number, data: Partial<EntryInput>) =>
+    request<Entry>(`/entries/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
+  deleteEntry: (id: number) => request<void>(`/entries/${id}`, { method: "DELETE" }),
+};
