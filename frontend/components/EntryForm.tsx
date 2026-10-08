@@ -14,9 +14,19 @@ type Props = {
   submitLabel: string;
   onSubmit: (data: EntryInput) => Promise<void>;
   onCancel?: () => void;
+  cancelLabel?: string;
+  /** Optional second action that also receives the edited values, e.g. "Merge into existing". */
+  secondary?: { label: string; onSubmit: (data: EntryInput) => Promise<void> };
 };
 
-export default function EntryForm({ initial, submitLabel, onSubmit, onCancel }: Props) {
+export default function EntryForm({
+  initial,
+  submitLabel,
+  onSubmit,
+  onCancel,
+  cancelLabel = "Cancel",
+  secondary,
+}: Props) {
   const [form, setForm] = useState({
     ...initial,
     to_do: toLines(initial.to_do),
@@ -30,12 +40,12 @@ export default function EntryForm({ initial, submitLabel, onSubmit, onCancel }: 
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>,
   ) => setForm({ ...form, [field]: e.target.value });
 
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  // Shared by the main submit and the optional secondary action.
+  async function run(action: (data: EntryInput) => Promise<void>) {
     setSaving(true);
     setError(null);
     try {
-      await onSubmit({
+      await action({
         ...form,
         kind: form.kind as EntryKind,
         to_do: fromLines(form.to_do),
@@ -50,7 +60,13 @@ export default function EntryForm({ initial, submitLabel, onSubmit, onCancel }: 
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <form
+      onSubmit={(e) => {
+        e.preventDefault();
+        run(onSubmit);
+      }}
+      className="flex flex-col gap-4"
+    >
       <Field label="Title">
         <input required value={form.title} onChange={set("title")} className="input"
           placeholder="e.g. Getting soaked in the rain" />
@@ -81,12 +97,18 @@ export default function EntryForm({ initial, submitLabel, onSubmit, onCancel }: 
 
       {error && <p className="text-sm text-red-600">{error}</p>}
 
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <button type="submit" disabled={saving} className="btn-primary flex-1">
           {saving ? "Saving…" : submitLabel}
         </button>
+        {secondary && (
+          <button type="button" disabled={saving} onClick={() => run(secondary.onSubmit)}
+            className="btn-secondary flex-1">
+            {secondary.label}
+          </button>
+        )}
         {onCancel && (
-          <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
+          <button type="button" onClick={onCancel} className="btn-secondary">{cancelLabel}</button>
         )}
       </div>
     </form>

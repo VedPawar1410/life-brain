@@ -10,5 +10,12 @@ class Settings(BaseSettings):
     # Browser origins allowed to call the API (the Next.js dev server by default).
     cors_origins: list[str] = ["http://localhost:3000"]
 
+    # LLM: any OpenAI-compatible API. Defaults point at Groq's free tier.
+    llm_base_url: str = "https://api.groq.com/openai/v1"
+    llm_api_key: str = ""
+    capture_model: str = "openai/gpt-oss-20b"
+    ask_model: str = "openai/gpt-oss-120b"
+    fallback_model: str = "openai/gpt-oss-20b"
+
 
 settings = Settings()
