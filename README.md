@@ -38,7 +38,15 @@ uv run python -m app.seed          # optional: 2 generic example entries
 uv run uvicorn app.main:app --reload
 ```
 
-API docs: http://localhost:8000/docs · Tests: `uv run pytest`
+API docs: http://localhost:8000/docs · Tests: `uv run pytest` (LLM mocked, free) · Live LLM smoke test: `uv run pytest -m live`
+
+### LLM (Groq free tier)
+Get a free key at https://console.groq.com and set `LLM_API_KEY` in `backend/.env`.
+Any OpenAI-compatible provider works — just change `LLM_BASE_URL` and the model names.
+
+Free-tier limits (checked Oct 2026, see https://console.groq.com/docs/rate-limits):
+**8K tokens/minute, 200K tokens/day, 30 requests/minute** per model. One capture uses ~1.5K tokens,
+so that's about 5 captures/minute. Hitting the limit returns HTTP 429 → "try again in a minute".
 
 ### Frontend
 ```bash
@@ -56,3 +64,5 @@ npm run dev                  # → http://localhost:3000 (open at phone width)
 | GET | `/entries/{id}` | |
 | PATCH | `/entries/{id}` | only fields you send are changed |
 | DELETE | `/entries/{id}` | |
+| POST | `/entries/{id}/merge` | fold a draft into an entry: lists unioned, text appended |
+| POST | `/capture` | `{text}` → structured draft + possible duplicate (nothing saved) |
