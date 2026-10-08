@@ -49,3 +49,8 @@ def test_delete_and_404s(client):
     assert client.get(f"/entries/{entry_id}").status_code == 404
     assert client.patch(f"/entries/{entry_id}", json={"notes": "x"}).status_code == 404
     assert client.delete(f"/entries/{entry_id}").status_code == 404
+
+
+def test_cors_allows_frontend_origin(client):
+    res = client.get("/entries", headers={"Origin": "http://localhost:3000"})
+    assert res.headers["access-control-allow-origin"] == "http://localhost:3000"

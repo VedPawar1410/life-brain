@@ -1,0 +1,50 @@
+import type { Entry } from "@/lib/api";
+
+export default function EntryView({ entry }: { entry: Entry }) {
+  return (
+    <article className="flex flex-col gap-4">
+      <div>
+        <span className="chip capitalize">{entry.kind}</span>
+        <h1 className="mt-2 text-2xl font-semibold">{entry.title}</h1>
+      </div>
+      <Section title="Situation" text={entry.situation} />
+      <Section title="What happens" text={entry.what_happens} />
+      <List title="✅ Do" items={entry.to_do} />
+      <List title="🚫 Avoid" items={entry.to_avoid} />
+      <Section title="Notes" text={entry.notes} />
+      {entry.tags.length > 0 && (
+        <div className="flex flex-wrap gap-1.5">
+          {entry.tags.map((t) => <span key={t} className="chip">#{t}</span>)}
+        </div>
+      )}
+      {entry.source_text && (
+        <details className="text-sm text-muted">
+          <summary className="cursor-pointer">Your original words</summary>
+          <p className="mt-1 whitespace-pre-wrap">{entry.source_text}</p>
+        </details>
+      )}
+    </article>
+  );
+}
+
+function Section({ title, text }: { title: string; text: string }) {
+  if (!text) return null;
+  return (
+    <section>
+      <h2 className="text-sm font-medium text-muted">{title}</h2>
+      <p className="mt-0.5 whitespace-pre-wrap">{text}</p>
+    </section>
+  );
+}
+
+function List({ title, items }: { title: string; items: string[] }) {
+  if (items.length === 0) return null;
+  return (
+    <section>
+      <h2 className="text-sm font-medium text-muted">{title}</h2>
+      <ul className="mt-1 list-disc space-y-0.5 pl-5">
+        {items.map((item, i) => <li key={i}>{item}</li>)}
+      </ul>
+    </section>
+  );
+}

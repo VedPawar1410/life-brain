@@ -40,6 +40,14 @@ uv run uvicorn app.main:app --reload
 
 API docs: http://localhost:8000/docs · Tests: `uv run pytest`
 
+### Frontend
+```bash
+cd frontend
+cp .env.example .env.local   # NEXT_PUBLIC_API_URL, defaults to http://localhost:8000
+npm install
+npm run dev                  # → http://localhost:3000 (open at phone width)
+```
+
 ### Entries API
 | Method | Path | Notes |
 |---|---|---|
