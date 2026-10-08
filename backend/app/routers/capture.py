@@ -6,21 +6,29 @@ from sqlalchemy.orm import Session
 
 from app import llm
 from app.db import get_db
-from app.models import Entry
+from app.models import Ask, Entry
 
 router = APIRouter(tags=["capture"])
 
 
 class CaptureRequest(BaseModel):
     text: str = Field(min_length=3, max_length=4000)
+    # Set when capturing "what worked" after an answer: gives the LLM the original Q&A.
+    ask_id: int | None = None
 
 
 @router.post("/capture", response_model=llm.CaptureDraft)
 def capture(body: CaptureRequest, db: Session = Depends(get_db)):
     """Free text -> draft entry. Nothing is saved: the user reviews the draft first."""
     entries = list(db.scalars(select(Entry).order_by(Entry.id)))
+    context = None
+    if body.ask_id is not None:
+        ask = db.get(Ask, body.ask_id)
+        if ask is None:
+            raise HTTPException(status.HTTP_404_NOT_FOUND, "Ask not found")
+        context = (ask.question, ask.answer)
     try:
-        draft = llm.extract_entry(body.text, entries)
+        draft = llm.extract_entry(body.text, entries, context=context)
     except openai.RateLimitError:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "LLM rate limit hit, try again in a minute")
     except (openai.APIError, ValueError) as err:

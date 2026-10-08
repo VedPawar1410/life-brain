@@ -96,10 +96,28 @@ def _compact(entries: list[Entry]) -> str:
     return "\n".join(f"{e.id} | {e.title} | {e.situation} | {', '.join(e.tags)}" for e in entries)
 
 
-def extract_entry(text: str, existing: list[Entry]) -> CaptureDraft:
-    """Ask the LLM to structure `text`. Validated with Pydantic, retried once on bad output."""
+FOLLOW_UP_CONTEXT = """
+
+This note is a follow-up to advice the person got from their second brain. Use it only to \
+understand what they are referring to (e.g. "the ginger tea helped"); record what THEY \
+report worked or didn't, not the advice itself.
+Their question: {question}
+The advice they got:
+{answer}"""
+
+
+def extract_entry(
+    text: str, existing: list[Entry], context: tuple[str, str] | None = None
+) -> CaptureDraft:
+    """Ask the LLM to structure `text`. Validated with Pydantic, retried once on bad output.
+
+    `context` = (question, answer) when the note follows up on an earlier Ask.
+    """
+    system = CAPTURE_SYSTEM_PROMPT.format(existing=_compact(existing))
+    if context:
+        system += FOLLOW_UP_CONTEXT.format(question=context[0], answer=context[1])
     messages = [
-        {"role": "system", "content": CAPTURE_SYSTEM_PROMPT.format(existing=_compact(existing))},
+        {"role": "system", "content": system},
         {"role": "user", "content": text},
     ]
     for attempt in range(2):

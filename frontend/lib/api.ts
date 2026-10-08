@@ -28,6 +28,17 @@ export type CaptureDraft = Omit<EntryInput, "source_text"> & {
   duplicate_reason: string | null;
 };
 
+export type AskRecord = {
+  id: number;
+  question: string;
+  answer: string;
+  model_used: string;
+  entry_ids_used: number[];
+  prompt_tokens: number | null;
+  completion_tokens: number | null;
+  created_at: string;
+};
+
 export const emptyEntry: EntryInput = {
   title: "",
   kind: "issue",
@@ -62,8 +73,10 @@ export const api = {
   deleteEntry: (id: number) => request<void>(`/entries/${id}`, { method: "DELETE" }),
   mergeEntry: (id: number, data: EntryInput) =>
     request<Entry>(`/entries/${id}/merge`, { method: "POST", body: JSON.stringify(data) }),
-  capture: (text: string) =>
-    request<CaptureDraft>("/capture", { method: "POST", body: JSON.stringify({ text }) }),
+  capture: (text: string, askId?: number) =>
+    request<CaptureDraft>("/capture", { method: "POST", body: JSON.stringify({ text, ask_id: askId }) }),
+  listAsks: () => request<AskRecord[]>("/asks"),
+  getAsk: (id: number) => request<AskRecord>(`/asks/${id}`),
 };
 
 // --- Ask: streamed as NDJSON (one JSON event per line) ---------------------------------
@@ -73,7 +86,8 @@ export type AskEvent =
   | { type: "meta"; model: string; fallback: boolean }
   | { type: "delta"; text: string }
   | { type: "done"; usage: { prompt_tokens: number; completion_tokens: number } | null }
-  | { type: "error"; message: string };
+  | { type: "error"; message: string }
+  | { type: "saved"; ask_id: number };
 
 export async function askStream(question: string, onEvent: (event: AskEvent) => void) {
   const res = await fetch(`${API_URL}/ask`, {
