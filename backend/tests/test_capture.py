@@ -1,11 +1,4 @@
-import json
-from types import SimpleNamespace
-
-import httpx
-import openai
-import pytest
-
-from app import llm
+from tests.conftest import rate_limit_error
 
 DRAFT = {
     "title": "Banana followed by water",
@@ -19,33 +12,6 @@ DRAFT = {
     "possible_duplicate_id": None,
     "duplicate_reason": None,
 }
-
-
-class FakeLLM:
-    """Stands in for the OpenAI client: returns queued replies and records each call."""
-
-    def __init__(self, *replies):
-        self.replies = list(replies)
-        self.calls = []
-        self.chat = SimpleNamespace(completions=SimpleNamespace(create=self._create))
-
-    def _create(self, **kwargs):
-        self.calls.append(kwargs)
-        reply = self.replies.pop(0)
-        if isinstance(reply, Exception):
-            raise reply
-        content = reply if isinstance(reply, str) else json.dumps(reply)
-        return SimpleNamespace(choices=[SimpleNamespace(message=SimpleNamespace(content=content))])
-
-
-@pytest.fixture
-def fake_llm(monkeypatch):
-    def install(*replies):
-        fake = FakeLLM(*replies)
-        monkeypatch.setattr(llm, "get_client", lambda: fake)
-        return fake
-
-    return install
 
 
 def test_capture_returns_draft_without_saving(client, fake_llm):
@@ -107,8 +73,7 @@ def test_capture_gives_up_after_second_invalid_reply(client, fake_llm):
 
 
 def test_capture_maps_rate_limit_to_429(client, fake_llm):
-    request = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
-    fake_llm(openai.RateLimitError("slow down", response=httpx.Response(429, request=request), body=None))
+    fake_llm(rate_limit_error())
     assert client.post("/capture", json={"text": "banana then water"}).status_code == 429
 
 

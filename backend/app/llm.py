@@ -5,9 +5,10 @@ provider is pure config (LLM_BASE_URL / LLM_API_KEY / model names in .env).
 """
 
 import json
+from collections.abc import Iterator
 from functools import lru_cache
 
-from openai import OpenAI
+from openai import APIError, OpenAI, RateLimitError
 from pydantic import BaseModel, ValidationError
 
 from app.config import settings
@@ -125,3 +126,114 @@ def extract_entry(text: str, existing: list[Entry]) -> CaptureDraft:
                 {"role": "user", "content": f"That was invalid ({err}). Reply with corrected JSON only."},
             ]
     raise AssertionError("unreachable")
+
+
+# --- Ask: question + the person's entries -> streamed advice ---------------------------
+
+ASK_SYSTEM_PROMPT = """\
+You are the person's "second brain": a helper that knows what they have learned about \
+their own body and life (their entries below) and combines it with sound general knowledge.
+
+Answer their situation with this exact markdown structure (skip a section only if it \
+would be empty):
+
+## From your brain
+What their own entries say about this situation. Cite each entry you use as [#id], \
+e.g. "A hot shower helps you [#1]". If no entry is relevant, say so in one line.
+
+## General guidance
+Widely accepted advice that adds to their entries. Keep it brief.
+
+## Do now
+- [ ] Concrete steps, in order. Their own proven steps first.
+
+## Next time
+- How to prevent or handle this better next time.
+
+## See a doctor if
+- Specific warning signs for this situation.
+
+Rules:
+- Their personal entries take priority over generic advice, EXCEPT safety: if anything \
+suggests an emergency (e.g. chest pain, trouble breathing, signs of stroke, severe \
+allergic reaction, suicidal thoughts), START the answer with a bold line telling them to \
+seek emergency help now, before any other section.
+- You are not a doctor. Never diagnose; never tell them to stop prescribed medication.
+- Be concise and practical. Bullets over paragraphs. No preamble.
+- Only cite ids that appear below. Never invent entries.
+
+Their entries:
+{entries}"""
+
+
+def select_entries(question: str, entries: list[Entry]) -> list[Entry]:
+    """Which entries go into the prompt. All of them for now (the brain is small).
+
+    This is the single seam to swap for retrieval (tag/keyword prefilter, then pgvector)
+    once the full brain no longer fits Groq's free-tier tokens-per-minute budget.
+    """
+    return entries
+
+
+def _full(entries: list[Entry]) -> str:
+    """Compact but complete: one block per entry, only non-empty fields."""
+    if not entries:
+        return "(none yet)"
+    blocks = []
+    for e in entries:
+        parts = [f"[#{e.id}] {e.title} ({e.kind})"]
+        for label, value in [
+            ("when", e.situation),
+            ("reaction", e.what_happens),
+            ("do", "; ".join(e.to_do)),
+            ("avoid", "; ".join(e.to_avoid)),
+            ("notes", e.notes),
+            ("tags", ", ".join(e.tags)),
+        ]:
+            if value:
+                parts.append(f"  {label}: {value}")
+        blocks.append("\n".join(parts))
+    return "\n".join(blocks)
+
+
+def stream_answer(question: str, entries: list[Entry]) -> Iterator[dict]:
+    """Yield events: {"type": "meta"|"delta"|"done"|"error", ...}.
+
+    Falls back to the smaller model on a 429. That error arrives before any tokens are
+    streamed, so the retry is invisible to the user apart from the model name.
+    """
+    messages = [
+        {"role": "system", "content": ASK_SYSTEM_PROMPT.format(entries=_full(entries))},
+        {"role": "user", "content": question},
+    ]
+    stream = None
+    for model in dict.fromkeys([settings.ask_model, settings.fallback_model]):  # de-duped, ordered
+        try:
+            stream = get_client().chat.completions.create(
+                model=model,
+                messages=messages,
+                stream=True,
+                stream_options={"include_usage": True},
+                reasoning_effort="medium",
+                max_completion_tokens=2000,
+                extra_body={"include_reasoning": False},  # Groq: don't stream the model's thinking
+            )
+            break
+        except RateLimitError:
+            continue
+    if stream is None:
+        yield {"type": "error", "message": "Rate limit hit on all models, try again in a minute."}
+        return
+
+    yield {"type": "meta", "model": model, "fallback": model != settings.ask_model}
+    usage = None
+    try:
+        for chunk in stream:
+            if chunk.usage:
+                usage = {"prompt_tokens": chunk.usage.prompt_tokens, "completion_tokens": chunk.usage.completion_tokens}
+            if chunk.choices and chunk.choices[0].delta.content:
+                yield {"type": "delta", "text": chunk.choices[0].delta.content}
+    except APIError as err:
+        yield {"type": "error", "message": f"LLM error mid-answer: {err}"}
+        return
+    yield {"type": "done", "usage": usage}
