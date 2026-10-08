@@ -3,6 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import EntryForm from "@/components/EntryForm";
+import MicButton from "@/components/MicButton";
 import { api, emptyEntry, type AskRecord, type CaptureDraft, type Entry, type EntryInput } from "@/lib/api";
 
 // 1) say it in your own words  2) review the AI's draft before anything is saved
@@ -80,13 +81,16 @@ export default function AddFlow() {
             }
           />
           {error && <p className="text-sm text-red-600">{error}</p>}
-          <button
-            onClick={structure}
-            disabled={thinking || text.trim().length < 3}
-            className="btn-primary"
-          >
-            {thinking ? "Thinking…" : "✨ Structure it"}
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <MicButton value={text} onChange={setText} />
+            <button
+              onClick={structure}
+              disabled={thinking || text.trim().length < 3}
+              className="btn-primary flex-1"
+            >
+              {thinking ? "Thinking…" : "✨ Structure it"}
+            </button>
+          </div>
           <button onClick={() => setStep({ name: "manual" })} className="text-sm text-muted">
             or fill it in manually
           </button>

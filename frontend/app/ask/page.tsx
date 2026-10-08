@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Markdown from "@/components/Markdown";
+import MicButton from "@/components/MicButton";
 import { api, askStream, type AskEvent, type AskRecord } from "@/lib/api";
 
 type Turn = {
@@ -157,6 +158,7 @@ export default function AskPage() {
             placeholder="What's happening?"
             className="input"
           />
+          <MicButton value={question} onChange={setQuestion} />
           <button type="submit" disabled={busy || question.trim().length < 3} className="btn-primary">
             {busy ? "…" : "Ask"}
           </button>

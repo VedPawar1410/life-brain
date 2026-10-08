@@ -12,12 +12,18 @@ const geistSans = Geist({
 export const metadata: Metadata = {
   title: "Life Brain",
   description: "Your personal second brain for body & life know-how",
+  // iOS home-screen app: full-screen, with a translucent status bar over our dark header.
+  appleWebApp: { capable: true, title: "Life Brain", statusBarStyle: "black-translucent" },
 };
 
 export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#fafaf9" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c0a09" },
+  ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
