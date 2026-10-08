@@ -62,3 +62,16 @@ class EntryRead(EntryBase):
     id: int
     created_at: datetime
     updated_at: datetime
+
+
+class AskRead(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+
+    id: int
+    question: str
+    answer: str
+    model_used: str
+    entry_ids_used: list[int]
+    prompt_tokens: int | None
+    completion_tokens: int | None
+    created_at: datetime

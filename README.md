@@ -66,4 +66,8 @@ npm run dev                  # → http://localhost:3000 (open at phone width)
 | DELETE | `/entries/{id}` | |
 | POST | `/entries/{id}/merge` | fold a draft into an entry: lists unioned, text appended |
 | POST | `/capture` | `{text}` → structured draft + possible duplicate (nothing saved) |
-| POST | `/ask` | `{question}` → NDJSON stream: `entries`, `meta` (model), `delta`…, `done` (usage) or `error` |
+| POST | `/ask` | `{question}` → NDJSON stream: `entries`, `meta` (model), `delta`…, `done` (usage) + `saved` (ask id), or `error` |
+| GET | `/asks?limit=` | question/answer history, newest first |
+| GET/DELETE | `/asks/{id}` | |
+
+`POST /capture` also accepts `ask_id`: a "what worked" follow-up gets the original question + answer as context.

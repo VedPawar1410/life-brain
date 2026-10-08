@@ -28,7 +28,7 @@ def _schema():
 def _clean_tables():
     yield
     with engine.begin() as conn:
-        conn.execute(text("TRUNCATE entries RESTART IDENTITY"))
+        conn.execute(text("TRUNCATE entries, asks RESTART IDENTITY"))
 
 
 @pytest.fixture

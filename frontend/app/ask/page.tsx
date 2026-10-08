@@ -1,8 +1,9 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Markdown from "@/components/Markdown";
-import { api, askStream, type AskEvent } from "@/lib/api";
+import { api, askStream, type AskEvent, type AskRecord } from "@/lib/api";
 
 type Turn = {
   question: string;
@@ -12,6 +13,7 @@ type Turn = {
   tokens?: number;
   error?: string;
   done: boolean;
+  askId?: number; // set once the answer is saved to history
 };
 
 const EXAMPLES = [
@@ -24,6 +26,7 @@ export default function AskPage() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [question, setQuestion] = useState("");
   const [titles, setTitles] = useState<Record<number, string>>({});
+  const [history, setHistory] = useState<AskRecord[]>([]);
   const bottomRef = useRef<HTMLDivElement>(null);
   const busy = turns.length > 0 && !turns[turns.length - 1].done;
 
@@ -32,6 +35,7 @@ export default function AskPage() {
     api.listEntries()
       .then((entries) => setTitles(Object.fromEntries(entries.map((e) => [e.id, e.title]))))
       .catch(() => {});
+    api.listAsks().then(setHistory).catch(() => {});
   }, []);
 
   useEffect(() => {
@@ -51,6 +55,22 @@ export default function AskPage() {
         tokens: event.usage ? event.usage.prompt_tokens + event.usage.completion_tokens : undefined,
       }));
     if (event.type === "error") updateLast(() => ({ error: event.message, done: true }));
+    if (event.type === "saved") updateLast(() => ({ askId: event.ask_id }));
+  }
+
+  // Re-open a past answer from history without calling the LLM again.
+  function reopen(record: AskRecord) {
+    setTurns((all) => [
+      ...all,
+      {
+        question: record.question,
+        answer: record.answer,
+        model: record.model_used,
+        tokens: (record.prompt_tokens ?? 0) + (record.completion_tokens ?? 0) || undefined,
+        done: true,
+        askId: record.id,
+      },
+    ]);
   }
 
   async function ask(text: string) {
@@ -78,6 +98,19 @@ export default function AskPage() {
               {example}
             </button>
           ))}
+          {history.length > 0 && (
+            <>
+              <h2 className="mt-4 text-sm font-medium text-muted">Recent questions</h2>
+              {history.slice(0, 10).map((record) => (
+                <button key={record.id} onClick={() => reopen(record)} className="card text-left text-sm">
+                  <span className="line-clamp-1">{record.question}</span>
+                  <span className="text-xs text-muted">
+                    {new Date(record.created_at).toLocaleDateString()}
+                  </span>
+                </button>
+              ))}
+            </>
+          )}
         </div>
       )}
 
@@ -99,6 +132,11 @@ export default function AskPage() {
                 {turn.fallback && " (lighter fallback model: main model was rate-limited)"}
                 {turn.tokens && ` · ${turn.tokens.toLocaleString()} tokens`}
               </p>
+            )}
+            {turn.askId && (
+              <Link href={`/add?ask=${turn.askId}`} className="btn-secondary mt-3 block text-center text-sm">
+                💡 Tried it? Save what worked
+              </Link>
             )}
           </div>
         </div>

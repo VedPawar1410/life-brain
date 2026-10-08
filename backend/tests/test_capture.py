@@ -107,3 +107,20 @@ def test_merge_unions_lists_and_appends_text(client):
     assert merged["to_do"] == ["Hot shower", "Ginger tea"]
     assert merged["tags"] == ["rain", "throat"]
     assert merged["source_text"] == "first note\n---\nsecond note"
+
+
+def test_capture_follow_up_includes_original_question_and_answer(client, fake_llm):
+    fake_llm(["Try ginger tea [#1]"])
+    client.post("/ask", json={"question": "soaked in rain?"})
+
+    fake = fake_llm(DRAFT)
+    res = client.post("/capture", json={"text": "the ginger tea really helped", "ask_id": 1})
+    assert res.status_code == 200
+    system = fake.calls[0]["messages"][0]["content"]
+    assert "Their question: soaked in rain?" in system
+    assert "Try ginger tea [#1]" in system
+
+
+def test_capture_follow_up_unknown_ask_is_404(client, fake_llm):
+    fake_llm(DRAFT)
+    assert client.post("/capture", json={"text": "it helped", "ask_id": 42}).status_code == 404
