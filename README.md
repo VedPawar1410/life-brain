@@ -66,3 +66,4 @@ npm run dev                  # → http://localhost:3000 (open at phone width)
 | DELETE | `/entries/{id}` | |
 | POST | `/entries/{id}/merge` | fold a draft into an entry: lists unioned, text appended |
 | POST | `/capture` | `{text}` → structured draft + possible duplicate (nothing saved) |
+| POST | `/ask` | `{question}` → NDJSON stream: `entries`, `meta` (model), `delta`…, `done` (usage) or `error` |

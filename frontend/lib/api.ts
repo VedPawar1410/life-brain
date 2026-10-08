@@ -65,3 +65,33 @@ export const api = {
   capture: (text: string) =>
     request<CaptureDraft>("/capture", { method: "POST", body: JSON.stringify({ text }) }),
 };
+
+// --- Ask: streamed as NDJSON (one JSON event per line) ---------------------------------
+
+export type AskEvent =
+  | { type: "entries"; ids: number[] }
+  | { type: "meta"; model: string; fallback: boolean }
+  | { type: "delta"; text: string }
+  | { type: "done"; usage: { prompt_tokens: number; completion_tokens: number } | null }
+  | { type: "error"; message: string };
+
+export async function askStream(question: string, onEvent: (event: AskEvent) => void) {
+  const res = await fetch(`${API_URL}/ask`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ question }),
+  });
+  if (!res.ok || !res.body) throw new Error(`Request failed (${res.status})`);
+
+  // Network chunks don't line up with events, so buffer until we have whole lines.
+  const reader = res.body.pipeThrough(new TextDecoderStream()).getReader();
+  let buffer = "";
+  while (true) {
+    const { value, done } = await reader.read();
+    if (done) break;
+    buffer += value;
+    const lines = buffer.split("\n");
+    buffer = lines.pop() ?? ""; // last piece may be incomplete
+    for (const line of lines) if (line.trim()) onEvent(JSON.parse(line));
+  }
+}
