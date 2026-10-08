@@ -22,7 +22,7 @@ A personal "second brain" for the things you learn about **your own body and lif
 3. AI capture (free text → structured entry, duplicate detection)
 4. Ask (personal + general answer, streamed)
 5. Learning loop (history, "save what worked")
-6. Phone polish (PWA, voice input)
+6. Phone polish (installable PWA, voice input, Tailscale access)
 
 ## Running locally
 
@@ -51,10 +51,32 @@ so that's about 5 captures/minute. Hitting the limit returns HTTP 429 → "try a
 ### Frontend
 ```bash
 cd frontend
-cp .env.example .env.local   # NEXT_PUBLIC_API_URL, defaults to http://localhost:8000
+cp .env.example .env.local   # optional: API_PROXY_TARGET, defaults to http://localhost:8000
 npm install
 npm run dev                  # → http://localhost:3000 (open at phone width)
 ```
+The browser only talks to Next.js: `/api/*` is proxied to FastAPI (see `next.config.ts`),
+so there's a single origin to expose and no CORS to configure.
+
+### On your phone (installable app + voice) via Tailscale
+Installing to the home screen and the microphone both require **HTTPS**. [Tailscale](https://tailscale.com)
+gives your Mac a private HTTPS address that only *your* devices can reach. Important, because the
+app has no login and holds health notes.
+
+1. Install Tailscale on your Mac and phone, and sign in to the same account on both.
+2. In the Tailscale admin console → **DNS**, enable **MagicDNS** and **HTTPS certificates**.
+3. With the backend and frontend running, on the Mac:
+   ```bash
+   tailscale serve --bg 3000
+   ```
+   It prints `https://<your-mac>.<tailnet>.ts.net`. Open that on your phone.
+4. Install: **iPhone**: Safari → Share → *Add to Home Screen*. **Android**: Chrome → ⋮ → *Install app*.
+
+Stop sharing with `tailscale serve --https=443 off`. Only Next.js (port 3000) is shared;
+FastAPI and Postgres stay bound to localhost.
+
+Voice input (🎙️ on Add and Ask) uses the browser's built-in Web Speech API, which isn't available
+in Firefox. The button simply doesn't appear where it's unsupported.
 
 ### Entries API
 | Method | Path | Notes |

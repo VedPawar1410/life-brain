@@ -1,6 +1,7 @@
 // Thin typed wrapper around the FastAPI backend. Every network call lives here.
 
-export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000";
+// Default: same-origin "/api", proxied to FastAPI by next.config.ts rewrites.
+export const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
 export const ENTRY_KINDS = ["issue", "remedy", "routine", "preference", "fact"] as const;
 export type EntryKind = (typeof ENTRY_KINDS)[number];
