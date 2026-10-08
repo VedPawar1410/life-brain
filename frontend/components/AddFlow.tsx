@@ -5,10 +5,13 @@ import { useEffect, useState } from "react";
 import EntryForm from "@/components/EntryForm";
 import { api, emptyEntry, type AskRecord, type CaptureDraft, type Entry, type EntryInput } from "@/lib/api";
 
-// Two steps: 1) say it in your own words  2) review the AI's draft before anything is saved.
+// 1) say it in your own words  2) review the AI's draft before anything is saved
+// 3) (optional) merge: review the combined entry and remove anything no longer true.
+type Review = { name: "review"; draft: EntryInput; duplicate: Entry | null; reason: string | null };
 type Step =
   | { name: "write" }
-  | { name: "review"; draft: EntryInput; duplicate: Entry | null; reason: string | null }
+  | Review
+  | { name: "merge"; merged: Entry; from: Review }
   | { name: "manual" };
 
 export default function AddFlow() {
@@ -50,7 +53,9 @@ export default function AddFlow() {
         <p className="text-sm text-muted">
           {step.name === "review"
             ? "Check the draft. Nothing is saved until you confirm."
-            : "Something you've learned about your body or life."}
+            : step.name === "merge"
+              ? "This is the combined entry. Remove anything that's no longer true, then save."
+              : "Something you've learned about your body or life."}
         </p>
       </header>
 
@@ -96,7 +101,8 @@ export default function AddFlow() {
               <p className="mt-1 font-semibold">{step.duplicate.title}</p>
               {step.reason && <p className="mt-1 text-sm text-muted">{step.reason}</p>}
               <p className="mt-2 text-sm text-muted">
-                &ldquo;Merge&rdquo; adds the new details to it instead of creating a second entry.
+                &ldquo;Merge&rdquo; combines them into one entry. You&apos;ll see the result before
+                anything is saved.
               </p>
             </div>
           )}
@@ -108,7 +114,11 @@ export default function AddFlow() {
               step.duplicate
                 ? {
                     label: "Merge into existing",
-                    onSubmit: async (data) => openEntry(await api.mergeEntry(step.duplicate!.id, data)),
+                    onSubmit: async (data) => {
+                      // Keep the edited draft, so "Back" returns to it unchanged.
+                      const from = { ...step, draft: data };
+                      setStep({ name: "merge", merged: await api.previewMerge(step.duplicate!.id, data), from });
+                    },
                   }
                 : undefined
             }
@@ -116,6 +126,17 @@ export default function AddFlow() {
             onCancel={() => setStep({ name: "write" })}
           />
         </>
+      )}
+
+      {step.name === "merge" && (
+        <EntryForm
+          key={step.merged.id}
+          initial={step.merged}
+          submitLabel="Save merged entry"
+          onSubmit={async (data) => openEntry(await api.updateEntry(step.merged.id, data))}
+          cancelLabel="Back"
+          onCancel={() => setStep(step.from)}
+        />
       )}
 
       {step.name === "manual" && (

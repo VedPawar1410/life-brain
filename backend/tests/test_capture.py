@@ -124,3 +124,21 @@ def test_capture_follow_up_includes_original_question_and_answer(client, fake_ll
 def test_capture_follow_up_unknown_ask_is_404(client, fake_llm):
     fake_llm(DRAFT)
     assert client.post("/capture", json={"text": "it helped", "ask_id": 42}).status_code == 404
+
+
+def test_merge_preview_returns_combined_entry_without_saving(client):
+    entry = client.post("/entries", json={"title": "Rain", "to_do": ["Ginger tea"], "tags": ["rain"]}).json()
+    draft = {"title": "Dry clothes", "to_do": ["Dry clothes first"], "notes": "Tea didn't help"}
+
+    preview = client.post(f"/entries/{entry['id']}/merge?preview=true", json=draft).json()
+    assert preview["id"] == entry["id"]
+    assert preview["title"] == "Rain"
+    assert preview["to_do"] == ["Ginger tea", "Dry clothes first"]
+    assert preview["notes"] == "Tea didn't help"
+
+    # Nothing changed in the database...
+    assert client.get(f"/entries/{entry['id']}").json()["to_do"] == ["Ginger tea"]
+
+    # ...until the user saves their edited version (here: dropping the tea).
+    client.patch(f"/entries/{entry['id']}", json={**preview, "to_do": ["Dry clothes first"]})
+    assert client.get(f"/entries/{entry['id']}").json()["to_do"] == ["Dry clothes first"]

@@ -71,8 +71,9 @@ export const api = {
   updateEntry: (id: number, data: Partial<EntryInput>) =>
     request<Entry>(`/entries/${id}`, { method: "PATCH", body: JSON.stringify(data) }),
   deleteEntry: (id: number) => request<void>(`/entries/${id}`, { method: "DELETE" }),
-  mergeEntry: (id: number, data: EntryInput) =>
-    request<Entry>(`/entries/${id}/merge`, { method: "POST", body: JSON.stringify(data) }),
+  /** The combined entry, NOT saved: the user tidies it, then saves with updateEntry. */
+  previewMerge: (id: number, data: EntryInput) =>
+    request<Entry>(`/entries/${id}/merge?preview=true`, { method: "POST", body: JSON.stringify(data) }),
   capture: (text: string, askId?: number) =>
     request<CaptureDraft>("/capture", { method: "POST", body: JSON.stringify({ text, ask_id: askId }) }),
   listAsks: () => request<AskRecord[]>("/asks"),

@@ -64,7 +64,7 @@ npm run dev                  # → http://localhost:3000 (open at phone width)
 | GET | `/entries/{id}` | |
 | PATCH | `/entries/{id}` | only fields you send are changed |
 | DELETE | `/entries/{id}` | |
-| POST | `/entries/{id}/merge` | fold a draft into an entry: lists unioned, text appended |
+| POST | `/entries/{id}/merge?preview=` | fold a draft into an entry: lists unioned, text appended. `preview=true` returns the result without saving |
 | POST | `/capture` | `{text}` → structured draft + possible duplicate (nothing saved) |
 | POST | `/ask` | `{question}` → NDJSON stream: `entries`, `meta` (model), `delta`…, `done` (usage) + `saved` (ask id), or `error` |
 | GET | `/asks?limit=` | question/answer history, newest first |
