@@ -1,11 +1,13 @@
 "use client";
 
-import { ChevronLeft, Pencil, Trash } from "lucide-react";
+import { ChevronLeft, FileQuestion, Pencil, Trash } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import EntryForm from "@/components/EntryForm";
 import EntryView from "@/components/EntryView";
+import EmptyState from "@/components/ui/EmptyState";
+import Skeleton from "@/components/ui/Skeleton";
 import { api, type Entry } from "@/lib/api";
 
 export default function EntryDetail() {
@@ -25,14 +27,39 @@ export default function EntryDetail() {
     router.push("/");
   }
 
-  if (error) return <p className="text-danger">{error}</p>;
-  if (!entry) return <p className="text-muted">Loading…</p>;
+  const back = (
+    <Link href="/" className="inline-flex items-center gap-1 self-start text-sm font-medium text-muted">
+      <ChevronLeft size={18} aria-hidden /> Brain
+    </Link>
+  );
+
+  if (error)
+    return (
+      <div className="flex flex-col gap-6">
+        {back}
+        <EmptyState
+          icon={FileQuestion}
+          tone="danger"
+          title="Couldn't open this entry"
+          body="It may have been deleted, or the backend isn't running."
+        />
+      </div>
+    );
+
+  if (!entry)
+    return (
+      <div className="flex flex-col gap-4" aria-label="Loading entry">
+        {back}
+        <Skeleton className="h-5 w-20 rounded-full" />
+        <Skeleton className="h-8 w-3/4" />
+        <Skeleton className="h-24 w-full rounded-2xl" />
+        <Skeleton className="h-20 w-full rounded-2xl" />
+      </div>
+    );
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/" className="inline-flex items-center gap-1 text-sm font-medium text-muted">
-        <ChevronLeft size={18} aria-hidden /> Brain
-      </Link>
+      {back}
 
       {editing ? (
         <EntryForm
