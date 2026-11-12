@@ -1,5 +1,7 @@
 "use client";
 
+import { Sparkles } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import EntryForm from "@/components/EntryForm";
@@ -49,16 +51,16 @@ export default function AddFlow() {
 
   return (
     <div className="flex flex-col gap-4">
-      <header>
-        <h1 className="text-2xl font-semibold">➕ Add to your brain</h1>
-        <p className="text-sm text-muted">
-          {step.name === "review"
+      <PageHeader
+        title="Add to your brain"
+        subtitle={
+          step.name === "review"
             ? "Check the draft. Nothing is saved until you confirm."
             : step.name === "merge"
               ? "This is the combined entry. Remove anything that's no longer true, then save."
-              : "Something you've learned about your body or life."}
-        </p>
-      </header>
+              : "Something you've learned about your body or life."
+        }
+      />
 
       {step.name === "write" && (
         <>
@@ -80,7 +82,7 @@ export default function AddFlow() {
                 : "e.g. When I eat a banana and drink water right after, I get bloated for about an hour. Waiting 30 min helps."
             }
           />
-          {error && <p className="text-sm text-red-600">{error}</p>}
+          {error && <p className="text-sm text-danger">{error}</p>}
           <div className="flex flex-wrap items-center gap-2">
             <MicButton value={text} onChange={setText} />
             <button
@@ -88,7 +90,8 @@ export default function AddFlow() {
               disabled={thinking || text.trim().length < 3}
               className="btn-primary flex-1"
             >
-              {thinking ? "Thinking…" : "✨ Structure it"}
+              <Sparkles size={18} aria-hidden />
+              {thinking ? "Thinking…" : "Structure it"}
             </button>
           </div>
           <button onClick={() => setStep({ name: "manual" })} className="text-sm text-muted">

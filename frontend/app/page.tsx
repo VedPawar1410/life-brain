@@ -1,5 +1,7 @@
 "use client";
 
+import KindBadge from "@/components/ui/KindBadge";
+import PageHeader from "@/components/ui/PageHeader";
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
 import { api, type Entry } from "@/lib/api";
@@ -32,12 +34,10 @@ export default function BrainPage() {
 
   return (
     <div className="flex flex-col gap-4">
-      <header>
-        <h1 className="text-2xl font-semibold">🧠 Your brain</h1>
-        <p className="text-sm text-muted">
-          {entries ? `${entries.length} things you know about yourself` : "Loading…"}
-        </p>
-      </header>
+      <PageHeader
+        title="Your brain"
+        subtitle={entries ? `${entries.length} things you know about yourself` : "Loading…"}
+      />
 
       <input
         type="search"
@@ -62,7 +62,7 @@ export default function BrainPage() {
       )}
 
       {error && (
-        <p className="text-sm text-red-600">
+        <p className="text-sm text-danger">
           Couldn&apos;t reach the API ({error}). Is the backend running?
         </p>
       )}
@@ -80,7 +80,7 @@ export default function BrainPage() {
             <Link href={`/entries/${entry.id}`} className="card">
               <div className="flex items-start justify-between gap-2">
                 <h2 className="font-medium">{entry.title}</h2>
-                <span className="chip shrink-0 capitalize">{entry.kind}</span>
+                <KindBadge kind={entry.kind} />
               </div>
               {entry.situation && (
                 <p className="mt-1 line-clamp-2 text-sm text-muted">{entry.situation}</p>

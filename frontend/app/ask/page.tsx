@@ -1,5 +1,7 @@
 "use client";
 
+import { Lightbulb } from "lucide-react";
+import PageHeader from "@/components/ui/PageHeader";
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 import Markdown from "@/components/Markdown";
@@ -87,10 +89,7 @@ export default function AskPage() {
 
   return (
     <div className="flex flex-col gap-4 pb-24">
-      <header>
-        <h1 className="text-2xl font-semibold">💬 Ask your brain</h1>
-        <p className="text-sm text-muted">Describe what&apos;s happening. Your own entries come first.</p>
-      </header>
+      <PageHeader title="Ask your brain" subtitle="Describe what's happening. Your own entries come first." />
 
       {turns.length === 0 && (
         <div className="flex flex-col gap-2">
@@ -126,7 +125,7 @@ export default function AskPage() {
             ) : (
               !turn.error && <p className="animate-pulse text-muted">Thinking…</p>
             )}
-            {turn.error && <p className="text-sm text-red-600">{turn.error}</p>}
+            {turn.error && <p className="text-sm text-danger">{turn.error}</p>}
             {turn.done && !turn.error && (
               <p className="mt-3 border-t border-line pt-2 text-xs text-muted">
                 Not medical advice. {turn.model?.replace("openai/", "")}
@@ -135,8 +134,8 @@ export default function AskPage() {
               </p>
             )}
             {turn.askId && (
-              <Link href={`/add?ask=${turn.askId}`} className="btn-secondary mt-3 block text-center text-sm">
-                💡 Tried it? Save what worked
+              <Link href={`/add?ask=${turn.askId}`} className="btn-secondary mt-3 w-full text-sm">
+                <Lightbulb size={16} aria-hidden /> Tried it? Save what worked
               </Link>
             )}
           </div>

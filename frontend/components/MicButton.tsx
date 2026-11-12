@@ -1,5 +1,6 @@
 "use client";
 
+import { Mic, Square } from "lucide-react";
 import { useRef, useState, useSyncExternalStore } from "react";
 
 // Minimal typings for the Web Speech API (not fully in TypeScript's DOM lib, and
@@ -75,11 +76,11 @@ export default function MicButton({ value, onChange, className = "" }: Props) {
         onClick={toggle}
         aria-label={listening ? "Stop dictation" : "Dictate with your voice"}
         aria-pressed={listening}
-        className={`btn-secondary shrink-0 ${listening ? "animate-pulse border-red-500 text-red-500" : ""} ${className}`}
+        className={`btn-icon shrink-0 ${listening ? "animate-pulse !border-danger !text-danger" : ""} ${className}`}
       >
-        {listening ? "■ Stop" : "🎙️"}
+        {listening ? <><Square size={16} fill="currentColor" aria-hidden /> Stop</> : <Mic size={20} aria-hidden />}
       </button>
-      {error && <span className="text-xs text-red-600">{error}</span>}
+      {error && <span className="text-xs text-danger">{error}</span>}
     </>
   );
 }
