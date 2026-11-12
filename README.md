@@ -73,7 +73,9 @@ app has no login and holds health notes.
 4. Install: **iPhone**: Safari → Share → *Add to Home Screen*. **Android**: Chrome → ⋮ → *Install app*.
 
 Stop sharing with `tailscale serve --https=443 off`. Only Next.js (port 3000) is shared;
-FastAPI and Postgres stay bound to localhost.
+FastAPI and Postgres stay bound to localhost. The dev and start scripts bind Next.js to
+`127.0.0.1` too: it proxies `/api` to the backend, so listening on all interfaces (Next's
+default) would expose your whole brain to anyone on the same Wi-Fi.
 
 Voice input (🎙️ on Add and Ask) uses the browser's built-in Web Speech API, which isn't available
 in Firefox. The button simply doesn't appear where it's unsupported.
