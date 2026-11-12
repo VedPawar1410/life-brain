@@ -1,8 +1,9 @@
 "use client";
 
-import { ArrowUpDown, Brain, ChevronRight, CloudOff, RotateCcw, Search, SearchX, X } from "lucide-react";
+import { ArrowUpDown, ChevronRight, CloudOff, RotateCcw, Search, SearchX, X } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Onboarding from "@/components/Onboarding";
 import EmptyState from "@/components/ui/EmptyState";
 import PageHeader from "@/components/ui/PageHeader";
 import Skeleton from "@/components/ui/Skeleton";
@@ -64,7 +65,9 @@ export default function BrainPage() {
           entries
             ? filtering
               ? `${visible.length} of ${entries.length} entries`
-              : `${entries.length} things you know about yourself`
+              : entries.length > 0
+                ? `${entries.length} things you know about yourself`
+                : undefined
             : error
               ? undefined
               : "Loading…"
@@ -147,16 +150,7 @@ export default function BrainPage() {
           ))}
         </ul>
       ) : entries.length === 0 ? (
-        <EmptyState
-          icon={Brain}
-          title="Start your brain"
-          body="Add the first thing you've learned about your body or life. Ask uses it from then on."
-          action={
-            <Link href="/add" className="btn-primary">
-              Add your first note
-            </Link>
-          }
-        />
+        <Onboarding />
       ) : visible.length === 0 ? (
         <EmptyState
           icon={SearchX}
