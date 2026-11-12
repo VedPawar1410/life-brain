@@ -1,11 +1,13 @@
 "use client";
 
-import { Lightbulb } from "lucide-react";
-import PageHeader from "@/components/ui/PageHeader";
+import { ArrowUp, ArrowUpRight, Check, Copy, Lightbulb, RotateCcw, RotateCcwClock } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useRef, useState } from "react";
-import Markdown from "@/components/Markdown";
+import { useCallback, useEffect, useRef, useState } from "react";
+import HistorySheet from "@/components/HistorySheet";
+import Markdown, { toPlainText, type CitedEntries } from "@/components/Markdown";
 import MicButton from "@/components/MicButton";
+import PageHeader from "@/components/ui/PageHeader";
+import Skeleton from "@/components/ui/Skeleton";
 import { api, askStream, type AskEvent, type AskRecord } from "@/lib/api";
 
 type Turn = {
@@ -21,22 +23,23 @@ type Turn = {
 
 const EXAMPLES = [
   "I just got soaked in the rain, what should I do?",
-  "I ate a banana and drank water, now I feel bloated",
+  "Is it fine to eat curd at 9pm?",
   "I can't fall asleep tonight",
 ];
 
 export default function AskPage() {
   const [turns, setTurns] = useState<Turn[]>([]);
   const [question, setQuestion] = useState("");
-  const [titles, setTitles] = useState<Record<number, string>>({});
+  const [entries, setEntries] = useState<CitedEntries>({});
   const [history, setHistory] = useState<AskRecord[]>([]);
+  const [historyOpen, setHistoryOpen] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const busy = turns.length > 0 && !turns[turns.length - 1].done;
 
-  // Entry titles turn [#id] citations into readable chips.
+  // Entry titles and kinds turn [#id] citations into readable chips.
   useEffect(() => {
     api.listEntries()
-      .then((entries) => setTitles(Object.fromEntries(entries.map((e) => [e.id, e.title]))))
+      .then((list) => setEntries(Object.fromEntries(list.map((e) => [e.id, { title: e.title, kind: e.kind }]))))
       .catch(() => {});
     api.listAsks().then(setHistory).catch(() => {});
   }, []);
@@ -62,7 +65,8 @@ export default function AskPage() {
   }
 
   // Re-open a past answer from history without calling the LLM again.
-  function reopen(record: AskRecord) {
+  const reopen = useCallback((record: AskRecord) => {
+    setHistoryOpen(false);
     setTurns((all) => [
       ...all,
       {
@@ -74,7 +78,8 @@ export default function AskPage() {
         askId: record.id,
       },
     ]);
-  }
+  }, []);
+  const closeHistory = useCallback(() => setHistoryOpen(false), []);
 
   async function ask(text: string) {
     if (!text.trim() || busy) return;
@@ -82,63 +87,91 @@ export default function AskPage() {
     setTurns((all) => [...all, { question: text.trim(), answer: "", done: false }]);
     try {
       await askStream(text.trim(), onEvent);
-    } catch (err) {
-      updateLast(() => ({ error: err instanceof Error ? err.message : "Something went wrong", done: true }));
+    } catch {
+      updateLast(() => ({ error: "Couldn't reach the backend.", done: true }));
     }
   }
 
   return (
-    <div className="flex flex-col gap-4 pb-24">
-      <PageHeader title="Ask your brain" subtitle="Describe what's happening. Your own entries come first." />
+    <div className="flex flex-col gap-5 pb-24">
+      <PageHeader
+        title="Ask your brain"
+        subtitle="Describe what's happening. Your own entries come first."
+        action={
+          history.length > 0 && (
+            <button
+              onClick={() => setHistoryOpen(true)}
+              className="btn-icon gap-1.5 px-3 py-2 text-sm"
+              aria-label={`Recent questions (${history.length})`}
+            >
+              <RotateCcwClock size={16} aria-hidden /> {history.length}
+            </button>
+          )
+        }
+      />
 
       {turns.length === 0 && (
-        <div className="flex flex-col gap-2">
+        <section className="flex flex-col gap-2">
+          <h2 className="text-sm font-medium text-muted">Try asking</h2>
           {EXAMPLES.map((example) => (
-            <button key={example} onClick={() => ask(example)} className="card text-left text-sm">
-              {example}
+            <button
+              key={example}
+              onClick={() => ask(example)}
+              className="card flex items-center gap-3 text-left text-sm transition-colors active:bg-surface-2"
+            >
+              <span className="flex-1">{example}</span>
+              <ArrowUpRight size={16} className="shrink-0 text-subtle" aria-hidden />
             </button>
           ))}
-          {history.length > 0 && (
-            <>
-              <h2 className="mt-4 text-sm font-medium text-muted">Recent questions</h2>
-              {history.slice(0, 10).map((record) => (
-                <button key={record.id} onClick={() => reopen(record)} className="card text-left text-sm">
-                  <span className="line-clamp-1">{record.question}</span>
-                  <span className="text-xs text-muted">
-                    {new Date(record.created_at).toLocaleDateString()}
-                  </span>
-                </button>
-              ))}
-            </>
-          )}
-        </div>
+        </section>
       )}
 
       {turns.map((turn, i) => (
         <div key={i} className="flex flex-col gap-2">
-          <p className="self-end rounded-2xl rounded-br-sm bg-accent px-3 py-2 text-background">
+          <p className="max-w-[85%] self-end rounded-2xl rounded-br-md bg-accent px-3.5 py-2 text-on-accent">
             {turn.question}
           </p>
-          <div className="card">
+          <article className="card">
             {turn.answer ? (
-              <Markdown text={turn.answer} titles={titles} />
+              <Markdown text={turn.answer} entries={entries} />
             ) : (
-              !turn.error && <p className="animate-pulse text-muted">Thinking…</p>
+              !turn.error && (
+                <div className="flex flex-col gap-2" aria-live="polite">
+                  <p className="text-sm font-medium text-accent">Checking your brain…</p>
+                  <Skeleton className="h-3.5 w-full" />
+                  <Skeleton className="h-3.5 w-5/6" />
+                  <Skeleton className="h-3.5 w-2/3" />
+                </div>
+              )
             )}
-            {turn.error && <p className="text-sm text-danger">{turn.error}</p>}
+
+            {turn.error && (
+              <div role="alert" className="flex flex-col items-start gap-2">
+                <p className="text-sm text-danger">{turn.error} Try again in a moment.</p>
+                <button onClick={() => ask(turn.question)} disabled={busy} className="btn-secondary text-sm">
+                  <RotateCcw size={16} aria-hidden /> Try again
+                </button>
+              </div>
+            )}
+
             {turn.done && !turn.error && (
-              <p className="mt-3 border-t border-line pt-2 text-xs text-muted">
-                Not medical advice. {turn.model?.replace("openai/", "")}
-                {turn.fallback && " (fallback: the main model was busy)"}
-                {turn.tokens && ` · ${turn.tokens.toLocaleString()} tokens`}
-              </p>
+              <footer className="mt-4 border-t border-line pt-3">
+                <div className="flex gap-2">
+                  {turn.askId && (
+                    <Link href={`/add?ask=${turn.askId}`} className="btn-secondary flex-1 py-2 text-sm">
+                      <Lightbulb size={16} aria-hidden /> Save what worked
+                    </Link>
+                  )}
+                  <CopyButton text={toPlainText(turn.answer, entries)} />
+                </div>
+                <p className="mt-2.5 text-xs text-muted">
+                  Not medical advice · {turn.model?.replace("openai/", "")}
+                  {turn.fallback && " (fallback)"}
+                  {turn.tokens && ` · ${turn.tokens.toLocaleString()} tokens`}
+                </p>
+              </footer>
             )}
-            {turn.askId && (
-              <Link href={`/add?ask=${turn.askId}`} className="btn-secondary mt-3 w-full text-sm">
-                <Lightbulb size={16} aria-hidden /> Tried it? Save what worked
-              </Link>
-            )}
-          </div>
+          </article>
         </div>
       ))}
       <div ref={bottomRef} />
@@ -149,21 +182,52 @@ export default function AskPage() {
           ask(question);
         }}
         // Sits just above the bottom nav, which grows by the home-indicator inset.
-        className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] border-t border-line bg-background/95 backdrop-blur"
+        className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] border-t border-line bg-background/90 backdrop-blur-md"
       >
-        <div className="mx-auto flex max-w-md gap-2 px-4 py-2">
-          <input
-            value={question}
-            onChange={(e) => setQuestion(e.target.value)}
-            placeholder="What's happening?"
-            className="input"
-          />
-          <MicButton value={question} onChange={setQuestion} />
-          <button type="submit" disabled={busy || question.trim().length < 3} className="btn-primary">
-            {busy ? "…" : "Ask"}
+        <div className="mx-auto flex max-w-md items-center gap-2 px-4 py-2">
+          {/* Messaging-app composer: input and mic in one pill, round send button. */}
+          <div className="flex min-w-0 flex-1 items-center rounded-full border border-line bg-card pr-1 pl-4 focus-within:border-accent">
+            <input
+              value={question}
+              onChange={(e) => setQuestion(e.target.value)}
+              placeholder="What's happening?"
+              aria-label="Your question"
+              className="min-w-0 flex-1 bg-transparent py-2.5 text-base outline-none placeholder:text-subtle"
+            />
+            <MicButton value={question} onChange={setQuestion} className="!rounded-full !border-0 !bg-transparent" />
+          </div>
+          <button
+            type="submit"
+            disabled={busy || question.trim().length < 3}
+            aria-label="Ask"
+            className="btn-primary size-11 shrink-0 !rounded-full !p-0"
+          >
+            <ArrowUp size={20} aria-hidden />
           </button>
         </div>
       </form>
+
+      <HistorySheet open={historyOpen} onClose={closeHistory} items={history} onPick={reopen} />
     </div>
+  );
+}
+
+function CopyButton({ text }: { text: string }) {
+  const [state, setState] = useState<"idle" | "copied" | "failed">("idle");
+  async function copy() {
+    // Clipboard access can be refused (permissions, unfocused page, older browsers): say so.
+    try {
+      await navigator.clipboard.writeText(text);
+      setState("copied");
+    } catch {
+      setState("failed");
+    }
+    setTimeout(() => setState("idle"), 1800);
+  }
+  return (
+    <button type="button" onClick={copy} className="btn-secondary py-2 text-sm" aria-live="polite">
+      {state === "copied" ? <Check size={16} className="text-accent" aria-hidden /> : <Copy size={16} aria-hidden />}
+      {state === "copied" ? "Copied" : state === "failed" ? "Couldn't copy" : "Copy"}
+    </button>
   );
 }
