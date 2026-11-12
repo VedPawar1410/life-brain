@@ -34,6 +34,12 @@ def capture(body: CaptureRequest, db: Session = Depends(get_db)):
     except (openai.APIError, ValueError) as err:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"LLM error: {err}")
 
+    return resolve_duplicate(draft, entries)
+
+
+def resolve_duplicate(draft: llm.CaptureDraft, entries: list[Entry]) -> llm.CaptureDraft:
+    """Final say on `possible_duplicate_id`. Shared by the route and the eval harness,
+    so the eval measures exactly what the app does."""
     # Never trust an id the model made up.
     if draft.possible_duplicate_id not in {e.id for e in entries}:
         draft.possible_duplicate_id = None
