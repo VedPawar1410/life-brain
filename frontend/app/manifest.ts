@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { BRAND_TEAL } from "./brand";
+import { BRAND_GREEN } from "./brand";
 
 // The web app manifest is what makes the site installable: name, icon, and
 // display "standalone" (opens full-screen without browser chrome, like a native app).
@@ -10,8 +10,8 @@ export default function manifest(): MetadataRoute.Manifest {
     description: "Your personal second brain for body & life know-how",
     start_url: "/",
     display: "standalone",
-    background_color: "#0c0a09",
-    theme_color: BRAND_TEAL,
+    background_color: "#f6f7f5", // --background (light): the splash colour on Android
+    theme_color: BRAND_GREEN,
     icons: [
       { src: "/icon/192", sizes: "192x192", type: "image/png" },
       { src: "/icon/512", sizes: "512x512", type: "image/png", purpose: "any" },

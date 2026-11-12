@@ -22,13 +22,22 @@ use it from your phone privately over [Tailscale](#on-your-phone-installable-app
 > ⚠️ A personal notebook, not medical advice.
 
 <p align="center">
-  <img src="docs/screenshots/brain.jpg" width="260" alt="The brain: a list of personal entries with tags">
-  <img src="docs/screenshots/ask.jpg" width="260" alt="Asking about raita at 9pm: the answer cites the 'Curd at night' entry">
-  <img src="docs/screenshots/capture.jpg" width="260" alt="Capturing a note: the draft is flagged as overlapping 'Curd at night'">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/brain-dark.jpg">
+    <img src="docs/screenshots/brain-light.jpg" width="260" alt="Your brain: entries with a coloured kind tile, tag filters with counts and a sort toggle">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/ask-dark.jpg">
+    <img src="docs/screenshots/ask-light.jpg" width="260" alt="Asking about raita at 9pm: the answer cites the 'Curd at night' entry under From your brain">
+  </picture>
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/capture-dark.jpg">
+    <img src="docs/screenshots/capture-light.jpg" width="260" alt="Adding a note: the AI draft is flagged as overlapping 'Curd at night' before anything is saved">
+  </picture>
 </p>
-<p align="center"><sub>Demo brain (synthetic data). Left: your entries. Middle: Ask infers raita = curd and cites
-<b>Curd at night</b>; note it also opened with an unnecessary emergency line, a known gap (see Limitations).
-Right: a new note is flagged as overlapping an existing entry before anything is saved.</sub></p>
+<p align="center"><sub>Demo brain (synthetic data), shown in your GitHub theme (light or dark). Left: your entries.
+Middle: Ask infers raita is curd and cites <b>Curd at night</b>. Right: a new note is flagged as overlapping
+an existing entry before anything is saved.</sub></p>
 
 ## How it works
 
@@ -122,7 +131,7 @@ frontend/
   components/          EntryForm, AddFlow, Markdown (tiny renderer for cited answers), MicButton, …
   lib/api.ts           every call to the backend, including the streamed Ask
   next.config.ts       /api proxy, Tailscale dev origins
-docs/screenshots/      README images (demo brain)
+docs/screenshots/      README images in light and dark (demo brain, production build)
 .claude/launch.json    dev server configs used while building
 ```
 
@@ -295,6 +304,22 @@ harness, then fixed one thing per PR, with numbers before and after each.
 false alarms (reduced, not proven gone), over-citation on unrelated questions, Android testing, and dev-only linter
 advisories.
 
+### Layer 3 - The redesign (Nov 2026)
+
+*What I did:* replaced the prototype UI in five PRs with a "calm clinical" design (light and dark,
+Inter, Lucide icons), and fixed the prompt problem the new design made more visible.
+
+| # | Decision | Why |
+|---|---|---|
+| 3.1 | All colours as tokens in one CSS file; a script checks 17 text/background pairs in both modes (WCAG AA) in CI | It caught the placeholder grey at 2.95:1 on the first run |
+| 3.2 | Audit where each colour is *used*, not just the pairs | Small labels used the icon grey (3.48:1 is fine for icons, too low for 12px text). The script checks pairs, so it missed this |
+| 3.3 | One icon set (Lucide) and one kind system (colour + icon per entry kind), used everywhere | Twelve emojis looked cheap; a single kind map keeps list tiles, badges, the picker and citation chips consistent |
+| 3.4 | Verify lockfile changes with CI's npm version, and require npm 11.19+ | My Mac's npm 11.6 dropped optional `@emnapi/*` entries twice; both times CI failed on a lockfile my local check had passed |
+| 3.5 | Textareas sized to their content | The merge preview clipped merged text, at exactly the step where you need to see everything to delete stale advice |
+| 3.6 | Catch clipboard refusals ("Couldn't copy") | A scripted test hit an uncaught `NotAllowedError`; real users can hit it too (permissions, older browsers) |
+| 3.7 | Fix the false emergency alarm in the prompt, not the UI | Styling the emergency line as a red alert made a model mistake more alarming (decision 2.11 has the numbers) |
+| 3.8 | Screenshots from a production build, light and dark via `<picture>` | No dev-mode badge, and GitHub shows each reader their own theme |
+
 ### Key takeaways
 
 1. **Measure before you fix.** A 15-case eval turned "it seems fine" into 4/6 → 6/6 and exposed two
@@ -303,11 +328,11 @@ advisories.
 3. **Code you don't touch still breaks.** Dependencies age; a scheduled CI run with an audit gate catches it.
 4. **Local-first is a product decision, not just a deployment one.** It removed auth, hosting and
    data-protection work entirely.
+5. **A redesign is also a test.** Rebuilding every screen surfaced bugs the old UI hid: clipped text,
+   unhandled clipboard errors, and a model failure that only looked serious once it was red.
 
 ## Future improvements
 
-0. **A full UI/UX redesign** (next): a new colour palette and typography, a real icon set
-   instead of emojis, and clearer flows. The current UI is functional but looks like a prototype.
 1. Eval cases for ingredient-level duplicates (lassi, raita, paneer → curd), then a prompt fix
    measured against them.
 2. "Only cite entries that genuinely apply" in the Ask prompt, measured on the hike case.
