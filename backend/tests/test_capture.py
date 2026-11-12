@@ -53,6 +53,14 @@ def test_capture_falls_back_to_tag_overlap_when_llm_misses_duplicate(client, fak
     assert body["duplicate_reason"] == "Shares tags: rain, cold"
 
 
+def test_capture_ignores_a_single_shared_generic_tag(client, fake_llm):
+    # Regression: "Mangoes give me pimples" was flagged as "Curd at night" via the tag "food".
+    client.post("/entries", json={"title": "Curd at night", "tags": ["food", "curd", "night"]})
+    fake_llm({**DRAFT, "title": "Mango pimples", "tags": ["food", "skin"]})
+    body = client.post("/capture", json={"text": "Mangoes give me pimples"}).json()
+    assert body["possible_duplicate_id"] is None
+
+
 def test_capture_no_duplicate_when_no_tags_overlap(client, fake_llm):
     client.post("/entries", json={"title": "Rain", "tags": ["rain"]})
     fake_llm(DRAFT)  # tags: food, digestion
