@@ -1,5 +1,7 @@
 # Life Brain 🧠
 
+[![CI](https://github.com/VedPawar1410/life-brain/actions/workflows/ci.yml/badge.svg)](https://github.com/VedPawar1410/life-brain/actions/workflows/ci.yml)
+
 A **local-first "second brain" for what you learn about your own body and life.** Tell it
 "curd at night gives me a cold and cough" once; weeks later ask *"dinner tonight is biryani with
 raita at 9pm, anything to watch out for?"* and it answers from **your** notes first (raita is
@@ -15,7 +17,7 @@ use it from your phone privately over [Tailscale](#on-your-phone-installable-app
 | Capture eval: structure a note, flag duplicates, never invent advice | **6/6** (was 4/6 before the duplicate fix) |
 | Ask latency (average / first word) | **1.6–2.2 s / 0.9–1.3 s** (Groq) |
 | Cost per answer | **Free** on Groq · **$0.00047** on the optional Claude Haiku 5.5 fallback |
-| Automated tests | **34** (LLM mocked, never spend money) |
+| Automated tests | **34** (LLM mocked, never spend money), run by CI on every PR and weekly |
 
 > ⚠️ A personal notebook, not medical advice.
 
@@ -96,7 +98,7 @@ with no database writes. Each report records the commit, models, every answer an
 | Capture eval | 4/6 | **6/6** |
 | LLM eval | none (quality judged by single manual tries) | 15-case harness + 4 committed reports |
 | When Groq is rate-limited | error | falls back to Claude Haiku (if a key is set) |
-| Tests | 25 | **34** |
+| Tests | 25, run by hand | **34**, plus lint, build and audit in CI (weekly too) |
 
 ## Project structure
 
@@ -155,7 +157,9 @@ DATABASE_URL=postgresql+psycopg://localhost/life_brain_demo uv run uvicorn app.m
 dropdb life_brain && createdb life_brain
 ```
 
-**Test and evaluate**
+**Test and evaluate.** CI ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)) runs the tests against a
+Postgres service, then lint, build and `npm audit` (fails on high/critical) on every PR, every push to
+`main` and **weekly**, so dependency advisories surface even when nobody touches the code.
 
 ```bash
 cd backend
@@ -271,6 +275,7 @@ harness, then fixed one thing per PR, with numbers before and after each.
 | 2.6 | Local-first, open source, no hosting | Strangers' health notes shouldn't live on my server; a demo brain + screenshots show it instead |
 | 2.7 | Demo brain in its own database | Screenshots and demos never touch real data (1.6) |
 | 2.8 | Rejected Gemini's free tier | Its free tier uses content to improve Google's products, which defeats local-first |
+| 2.9 | CI on every PR plus a **weekly** run, with an `npm audit` gate; tests use a separate `TEST_DATABASE_URL` | The Oct 8 lockfile fails this gate (1 critical), so a weekly run would have caught 1.3 within days. Tests drop every table, so they never trust `DATABASE_URL` |
 
 *Known gaps I chose not to fix (yet):* ingredient-level duplicates (lassi → curd), the emergency
 rule's false alarms, over-citation on unrelated questions, the unverified phone install, and
@@ -281,7 +286,7 @@ dev-only linter advisories.
 1. **Measure before you fix.** A 15-case eval turned "it seems fine" into 4/6 → 6/6 and exposed two
    new problems I hadn't noticed.
 2. **Security regressions hide in glue code.** The proxy, not the API, leaked the data.
-3. **Code you don't touch still breaks.** Dependencies age; CI and audits catch it.
+3. **Code you don't touch still breaks.** Dependencies age; a scheduled CI run with an audit gate catches it.
 4. **Local-first is a product decision, not just a deployment one.** It removed auth, hosting and
    data-protection work entirely.
 
