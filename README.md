@@ -200,6 +200,11 @@ to the backend, so Next's default (all interfaces) would expose your whole brain
 Voice input (🎙️ on Add and Ask) uses the browser's Web Speech API; the button only appears where
 it's supported (not Firefox) and on a secure page.
 
+**Verified on an iPhone (Nov 2026) over Tailscale:** HTTPS loads in Safari and as an installed app;
+the home-screen icon, full-screen launch, streamed answers with entry chips, and voice input all work,
+**including voice inside the installed app** (iOS asks for microphone and speech-recognition access
+the first time).
+
 ### API
 
 | Method | Path | Notes |
@@ -232,7 +237,8 @@ in `package-lock.json`).
   cases also involve judgment calls.
 - **Groq → Claude hand-off is verified with mocked tests only;** each provider was tested live on its
   own, but a real Groq 429 couldn't be forced.
-- **Phone install and voice are not yet verified on a real device.**
+- **Phone install and voice are verified on one iPhone only** (Safari and the installed app, Nov 2026);
+  Android is untested.
 - **Scale:** sending the whole brain hits Groq's free-tier limit at ~110 entries per question-minute.
 - **7 moderate advisories remain in dev-only linter dependencies** (`minimatch` inside
   `eslint-config-next`); they never ship.
@@ -259,6 +265,7 @@ installable PWA with voice input.
 | 1.7 | **Judged LLM quality by a few manual tries** | "3/3 correct" on one run of a handful of notes. The same check across runs found the model alone catching 2 of 3 real duplicates once and 1 of 3 another time. | Build a small fixed eval early and expect run-to-run variance. |
 | 1.8 | **Guessed instead of measuring** | I predicted Ask would hit the rate limit "at a few dozen entries". Measured cost (~350 + 60 tokens per entry) puts it at ~110. | Measure before predicting, especially costs and limits. |
 | 1.9 | **Returned a value from `useEffect`** | `useEffect(() => ref.current?.scrollIntoView(...))` returned a Promise in newer Chrome, which React rejects as a cleanup function. Caught only in the browser. | Effects return nothing or a cleanup; test in a real browser, not just the type checker. |
+| 1.10 | **Never opened the installed app on a real phone** | On an iPhone the installed app's titles sat under the status bar (blurred) and the bottom nav floated up on short pages, covering the Ask input. Desktop browsers and Safari tabs report zero safe-area insets, so none of it showed up in testing. | Test a PWA as an installed app on a real device; emulators don't reproduce safe areas. |
 
 ### Layer 2 - The rebuild (Nov 2026)
 
@@ -277,9 +284,11 @@ harness, then fixed one thing per PR, with numbers before and after each.
 | 2.8 | Rejected Gemini's free tier | Its free tier uses content to improve Google's products, which defeats local-first |
 | 2.9 | CI on every PR plus a **weekly** run, with an `npm audit` gate; tests use a separate `TEST_DATABASE_URL` | The Oct 8 lockfile fails this gate (1 critical), so a weekly run would have caught 1.3 within days. Tests drop every table, so they never trust `DATABASE_URL`. The first real run still failed twice where my local simulation passed: `setup-uv` has no floating `v10` tag, and the runner's newer npm (11.19) rejected a lockfile written by npm 11.6. Simulating CI isn't running CI |
 
+| 2.10 | Pad by `env(safe-area-inset-*)`; `<body>` uses `min-h-lvh` instead of `h-full`/`min-h-full` | Fixes 1.10. In the installed app "100%" height excludes the status bar, so on short pages iOS anchored the fixed nav to a shorter page. Found only by testing on the phone. (Also learned: running `npm ci` under a live dev server corrupts Turbopack's cache; stop the server first.) |
+
 *Known gaps I chose not to fix (yet):* ingredient-level duplicates (lassi → curd), the emergency
-rule's false alarms, over-citation on unrelated questions, the unverified phone install, and
-dev-only linter advisories.
+rule's false alarms, over-citation on unrelated questions, Android testing, and dev-only linter
+advisories.
 
 ### Key takeaways
 
@@ -292,6 +301,8 @@ dev-only linter advisories.
 
 ## Future improvements
 
+0. **A full UI/UX redesign** (next): a new colour palette and typography, a real icon set
+   instead of emojis, and clearer flows. The current UI is functional but looks like a prototype.
 1. Eval cases for ingredient-level duplicates (lassi, raita, paneer → curd) and for **no false
    emergency alarm on benign questions**, then prompt fixes measured against them.
 2. "Only cite entries that genuinely apply" in the Ask prompt, measured on the hike case.
