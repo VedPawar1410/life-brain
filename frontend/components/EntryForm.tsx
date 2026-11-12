@@ -95,7 +95,7 @@ export default function EntryForm({
         <input value={form.tags} onChange={set("tags")} className="input" placeholder="rain, cold, throat" />
       </Field>
 
-      {error && <p className="text-sm text-red-600">{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
       <div className="flex flex-wrap gap-2">
         <button type="submit" disabled={saving} className="btn-primary flex-1">

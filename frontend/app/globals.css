@@ -1,24 +1,62 @@
 @import "tailwindcss";
 
+/* Design tokens: "calm clinical". Every colour in the app comes from here, and the dark
+   palette below swaps in automatically with the system setting. Contrast is checked against
+   WCAG AA by scripts/check-contrast.mjs. */
 :root {
-  --background: #fafaf9;
-  --foreground: #1c1917;
+  --background: #f6f7f5;
   --card: #ffffff;
-  --muted: #78716c;
-  --line: #e7e5e4;
-  --accent: #0f766e;
-  --accent-soft: #ccfbf1;
+  --surface-2: #eef1ee;
+  --line: #dde2de;
+  --foreground: #17201c;
+  --muted: #5b6b64;
+  --subtle: #7d8d86;
+  --accent: #2f6f5e;
+  --accent-soft: #e3efea;
+  --accent-ink: #1f4e42;
+  --on-accent: #ffffff;
+  --danger: #b4352e;
+  --danger-soft: #f8e5e3;
+
+  /* Entry kinds: text colour on a soft tint */
+  --kind-issue: #8a5a0b;
+  --kind-issue-bg: #fbefd9;
+  --kind-remedy: #1f6b4f;
+  --kind-remedy-bg: #dff1e8;
+  --kind-routine: #1f5b93;
+  --kind-routine-bg: #e1ecf8;
+  --kind-preference: #5b3fa6;
+  --kind-preference-bg: #ece6fa;
+  --kind-fact: #4e5b55;
+  --kind-fact-bg: #eceeed;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #0c0a09;
-    --foreground: #f5f5f4;
-    --card: #1c1917;
-    --muted: #a8a29e;
-    --line: #292524;
-    --accent: #2dd4bf;
-    --accent-soft: #134e4a;
+    --background: #0f1412;
+    --card: #161c19;
+    --surface-2: #1d2421;
+    --line: #28312d;
+    --foreground: #e7ece9;
+    --muted: #9aaba3;
+    --subtle: #6e7d76;
+    --accent: #5fb39a;
+    --accent-soft: #1d3a31;
+    --accent-ink: #bfe3d6;
+    --on-accent: #0f1412;
+    --danger: #f08a80;
+    --danger-soft: #3a1e1b;
+
+    --kind-issue: #f2c46d;
+    --kind-issue-bg: #3a2d14;
+    --kind-remedy: #7fd3ae;
+    --kind-remedy-bg: #173329;
+    --kind-routine: #8dbbeb;
+    --kind-routine-bg: #182b40;
+    --kind-preference: #b9a6f2;
+    --kind-preference-bg: #2a2342;
+    --kind-fact: #aeb9b4;
+    --kind-fact-bg: #232a27;
   }
 }
 
@@ -26,61 +64,104 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
-  --color-muted: var(--muted);
+  --color-surface-2: var(--surface-2);
   --color-line: var(--line);
+  --color-muted: var(--muted);
+  --color-subtle: var(--subtle);
   --color-accent: var(--accent);
   --color-accent-soft: var(--accent-soft);
-  --font-sans: var(--font-geist-sans);
+  --color-accent-ink: var(--accent-ink);
+  --color-on-accent: var(--on-accent);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --font-sans: var(--font-inter);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* A few shared building blocks, kept as plain CSS so markup stays readable. */
+/* Shared building blocks, kept as plain CSS so markup stays readable. */
 @layer components {
   .input {
     width: 100%;
     border: 1px solid var(--line);
     background: var(--card);
     border-radius: 0.75rem;
-    padding: 0.625rem 0.75rem;
+    padding: 0.625rem 0.875rem;
     font-size: 1rem; /* ≥16px stops iOS Safari from zooming in on focus */
+    transition: border-color 150ms;
+  }
+  .input::placeholder {
+    color: var(--subtle);
   }
   .input:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -1px;
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px var(--accent-soft);
   }
+
   .btn-primary,
   .btn-secondary,
-  .btn-danger {
+  .btn-danger,
+  .btn-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
     border-radius: 0.75rem;
     padding: 0.625rem 1rem;
-    font-weight: 600;
+    font-weight: 500;
+    transition: background-color 150ms, transform 100ms;
+  }
+  .btn-primary:active,
+  .btn-secondary:active,
+  .btn-danger:active,
+  .btn-icon:active {
+    transform: scale(0.98);
   }
   .btn-primary {
     background: var(--accent);
-    color: var(--background);
+    color: var(--on-accent);
   }
+  /* Disabled = neutral, not a faded accent (faded green reads as muddy, worst in dark mode). */
   .btn-primary:disabled {
-    opacity: 0.6;
+    background: var(--surface-2);
+    color: var(--subtle);
   }
   .btn-secondary {
+    background: var(--card);
     border: 1px solid var(--line);
   }
-  .btn-danger {
-    border: 1px solid #dc2626;
-    color: #dc2626;
+  .btn-secondary:hover {
+    background: var(--surface-2);
   }
+  .btn-danger {
+    border: 1px solid var(--danger);
+    color: var(--danger);
+  }
+  .btn-icon {
+    padding: 0.625rem;
+    background: var(--card);
+    border: 1px solid var(--line);
+    color: var(--muted);
+  }
+
+  /* Neutral chip for tags and citations; kinds use KindBadge. */
   .chip {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
     border-radius: 999px;
-    background: var(--accent-soft);
-    color: var(--foreground);
+    background: var(--surface-2);
+    color: var(--muted);
     padding: 0.125rem 0.625rem;
     font-size: 0.75rem;
+    font-weight: 500;
   }
+
   .card {
     display: block;
     border: 1px solid var(--line);

@@ -126,7 +126,8 @@ docs/screenshots/      README images (demo brain)
 
 ## Run locally
 
-Needs Postgres, [uv](https://docs.astral.sh/uv/) and Node 20+. A free Groq key from
+Needs Postgres, [uv](https://docs.astral.sh/uv/), Node 20+ and **npm 11.19+** (older npm drops
+optional WebAssembly entries from `package-lock.json`, and CI's `npm ci` then rejects it). A free Groq key from
 [console.groq.com](https://console.groq.com).
 
 ```bash

@@ -1,3 +1,4 @@
+import { BookMarked } from "lucide-react";
 import Link from "next/link";
 import { Fragment } from "react";
 
@@ -47,8 +48,8 @@ function Inline({ text, titles }: Props) {
         if (cite) {
           const id = Number(cite[1]);
           return (
-            <Link key={i} href={`/entries/${id}`} className="chip mx-0.5 align-middle no-underline">
-              🧠 {titles[id] ?? `#${id}`}
+            <Link key={i} href={`/entries/${id}`} className="chip mx-0.5 align-middle text-accent-ink bg-accent-soft no-underline">
+              <BookMarked size={12} aria-hidden /> {titles[id] ?? `#${id}`}
             </Link>
           );
         }

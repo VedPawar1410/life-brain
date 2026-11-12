@@ -1,5 +1,6 @@
 "use client";
 
+import { ChevronLeft, Pencil, Trash } from "lucide-react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -24,12 +25,14 @@ export default function EntryDetail() {
     router.push("/");
   }
 
-  if (error) return <p className="text-red-600">{error}</p>;
+  if (error) return <p className="text-danger">{error}</p>;
   if (!entry) return <p className="text-muted">Loading…</p>;
 
   return (
     <div className="flex flex-col gap-6">
-      <Link href="/" className="text-sm text-muted">← Brain</Link>
+      <Link href="/" className="inline-flex items-center gap-1 text-sm font-medium text-muted">
+        <ChevronLeft size={18} aria-hidden /> Brain
+      </Link>
 
       {editing ? (
         <EntryForm
@@ -45,8 +48,12 @@ export default function EntryDetail() {
         <>
           <EntryView entry={entry} />
           <div className="flex gap-2">
-            <button onClick={() => setEditing(true)} className="btn-secondary flex-1">Edit</button>
-            <button onClick={handleDelete} className="btn-danger">Delete</button>
+            <button onClick={() => setEditing(true)} className="btn-secondary flex-1">
+              <Pencil size={16} aria-hidden /> Edit
+            </button>
+            <button onClick={handleDelete} className="btn-danger">
+              <Trash size={16} aria-hidden /> Delete
+            </button>
           </div>
         </>
       )}
