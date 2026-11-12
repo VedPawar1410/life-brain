@@ -1,0 +1,377 @@
+{
+ "run_at": "2026-11-12T10:32:38+00:00",
+ "git_commit": "a1966ee-dirty",
+ "models": {
+  "capture": "openai/gpt-oss-20b",
+  "ask": "openai/gpt-oss-120b",
+  "fallback": "openai/gpt-oss-20b",
+  "claude": "claude-haiku-5-5"
+ },
+ "providers": [
+  "groq"
+ ],
+ "brain_entries": 8,
+ "summary": {
+  "capture_pass": "6/6",
+  "capture_llm_alone_dup_correct": "6/6",
+  "ask_pass": "9/10",
+  "false_alarms": "0/8",
+  "emergencies_alerted": "2/2",
+  "ask_avg_total_tokens": 1331.9,
+  "ask_avg_prompt_tokens": 852.4,
+  "ask_avg_secs": 2.03,
+  "ask_avg_first_token_s": 1.45,
+  "ask_fallbacks": 0
+ },
+ "claude_cost": null,
+ "capture": [
+  {
+   "case": "I get acidity if I drink tea first thing in the morning without eating",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    5,
+    null
+   ],
+   "llm_alone_dup": null,
+   "final_dup": 5,
+   "tags": [
+    "food",
+    "acidity"
+   ],
+   "to_do": [],
+   "secs": 1.69
+  },
+  {
+   "case": "eating yogurt after dinner gave me a cough again",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    1
+   ],
+   "llm_alone_dup": 1,
+   "final_dup": 1,
+   "tags": [
+    "food",
+    "curd"
+   ],
+   "to_do": [],
+   "secs": 1.8
+  },
+  {
+   "case": "whenever I get wet in the rain my throat hurts",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    2
+   ],
+   "llm_alone_dup": 2,
+   "final_dup": 2,
+   "tags": [
+    "rain",
+    "throat"
+   ],
+   "to_do": [],
+   "secs": 0.58
+  },
+  {
+   "case": "I can't sleep if I have coffee in the evening",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    4
+   ],
+   "llm_alone_dup": 4,
+   "final_dup": 4,
+   "tags": [
+    "coffee",
+    "sleep"
+   ],
+   "to_do": [],
+   "secs": 0.64
+  },
+  {
+   "case": "Mangoes give me pimples",
+   "ok": true,
+   "checks": {
+    "duplicate": true,
+    "no_invented_advice": true
+   },
+   "acceptable": [
+    null
+   ],
+   "llm_alone_dup": null,
+   "final_dup": null,
+   "tags": [
+    "food",
+    "skin"
+   ],
+   "to_do": [],
+   "secs": 0.58
+  },
+  {
+   "case": "Long phone scrolling at night makes my eyes hurt; turning on night mode helps",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    null
+   ],
+   "llm_alone_dup": null,
+   "final_dup": null,
+   "tags": [
+    "screen",
+    "eye",
+    "night"
+   ],
+   "to_do": [
+    "Turn on night mode"
+   ],
+   "secs": 1.06
+  }
+ ],
+ "ask": [
+  {
+   "case": "Is it fine to eat curd at 9pm?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "no_false_alarm": true
+   },
+   "cited": [
+    1
+   ],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 852,
+    "completion_tokens": 396
+   },
+   "first_token_s": 1.08,
+   "secs": 1.82,
+   "answer": "## From your brain\n- You get a cold and cough the next day when you eat curd or yogurt in the evening or at night, and you avoid curd, raita, lassi, or yogurt after 7\u202fpm [#1].\n\n## General guidance\n- Dairy close to bedtime can increase mucus production for some people and may disturb sleep. If you\u2019re sensitive, choose a lighter snack earlier in the evening.\n\n## Do now\n- [ ] Skip curd at 9\u202fpm; have it earlier (e.g., at lunch) as you\u2019ve found that works for you.\n- [ ] If you really want a dairy snack later, try a small portion of low\u2011fat cheese or kefir and see how you feel, but monitor for any throat or cough symptoms.\n\n## Next time\n- Plan your dairy intake for earlier meals (lunch or early dinner) to stay within your comfort window.\n- Keep a simple log of any evening dairy and next\u2011day symptoms to confirm the pattern.\n\n## See a doctor if\n- You develop a persistent cough, fever, or breathing difficulty after eating curd, even when taken earlier."
+  },
+  {
+   "case": "Dinner tonight is biryani with raita, anything I should watch out for?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "no_false_alarm": true
+   },
+   "cited": [
+    1,
+    5,
+    8
+   ],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 857,
+    "completion_tokens": 694
+   },
+   "first_token_s": 2.38,
+   "secs": 3.09,
+   "answer": "## From your brain\n- Eating raita (curd/yogurt) after 7\u202fpm can lead to a cold and cough the next day; you\u2019ve found it works best to have curd only at lunch and avoid it in the evening [#1].\n- If the biryani is very spicy and you haven\u2019t eaten anything beforehand, it may cause acidity; you usually eat something plain first to prevent that [#5].\n\n## General guidance\n- Pair the biryani with a light, non\u2011dairy side (e.g., cucumber slices, salad) if you\u2019re eating after 7\u202fpm.\n- Stay hydrated with warm water rather than cold drinks, especially if you notice any throat irritation.\n\n## Do now\n- [ ] Skip the raita or replace it with a non\u2011dairy alternative (e.g., a cucumber\u2011mint yogurt\u2011free dip).\n- [ ] If you still want a cooling side, use plain yogurt mixed with a small amount of fruit (avoid large portions) and finish it before 7\u202fpm if possible.\n- [ ] Eat a small, bland snack (like toast or a banana) before the meal if you\u2019re hungry after a long gap, to reduce acidity risk.\n- [ ] Drink warm water throughout the dinner instead of cold beverages.\n\n## Next time\n- Plan to have dairy\u2011based sides earlier in the day.\n- If you anticipate a spicy meal, always have a plain carb or fruit beforehand.\n- Keep a habit of the 20\u201120\u201120 screen rule after dinner if you\u2019ll be on devices, to avoid headaches later [#8].\n\n## See a doctor if\n- You develop a persistent cough, fever, or chest congestion lasting more than a few days after the meal.  \n- You experience severe heartburn or vomiting that doesn\u2019t improve with over\u2011the\u2011counter antacids."
+  },
+  {
+   "case": "I just got soaked in the rain, what now?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "no_false_alarm": true
+   },
+   "cited": [
+    2
+   ],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 851,
+    "completion_tokens": 439
+   },
+   "first_token_s": 0.92,
+   "secs": 1.51,
+   "answer": "## From your brain\n- Getting wet from rain can lead to a sore throat the next day. You\u2019ve found that a **hot shower right away and fully drying your hair** helps prevent it, and you should **avoid sitting in wet clothes** [#2].\n\n## General guidance\n- Warm up gradually; avoid sudden temperature changes.\n- Change into dry, breathable clothing as soon as possible.\n- Stay hydrated and consider a soothing warm beverage (e.g., herbal tea with honey).\n\n## Do now\n- [ ] Take a **hot shower** immediately.  \n- [ ] **Dry your hair completely** (towel + low\u2011heat blow dryer if needed).  \n- [ ] **Change into dry clothes** and socks.  \n- [ ] Sip **warm water or herbal tea** with honey to keep the throat moist.  \n\n## Next time\n- Carry a **compact umbrella or raincoat** when the forecast shows rain.  \n- Keep a **dry change of clothes** (especially socks) in your bag or car.  \n- If you get caught, **head straight to a warm indoor space** before sitting down.\n\n## See a doctor if\n- You develop a **persistent sore throat** lasting more than a few days.  \n- You notice **fever, swollen glands, or difficulty swallowing**.  \n- You experience **persistent cough, shortness of breath, or chest discomfort**."
+  },
+  {
+   "case": "Can I have a banana with a glass of cold water as a snack?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "no_false_alarm": true
+   },
+   "cited": [
+    3
+   ],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 855,
+    "completion_tokens": 378
+   },
+   "first_token_s": 0.89,
+   "secs": 1.29,
+   "answer": "## From your brain\n- Drinking cold water right after eating a banana gives you bloating; you should sip warm water instead and avoid cold water after a banana [#3].\n\n## General guidance\n- Cold liquids can slow stomach emptying, especially after fruit, leading to gas and discomfort.  \n- A small wait (10\u201115\u202fmin) between eating and drinking helps digestion for most people.\n\n## Do now\n- [ ] Finish the banana.  \n- [ ] Wait about 10\u202fminutes.  \n- [ ] Drink a glass of **warm** (room\u2011temperature) water, sipping slowly.  \n\n## Next time\n- Plan the snack so the banana is followed by warm water or wait before drinking.  \n- Keep the water temperature mild to avoid triggering bloating.\n\n## See a doctor if\n- You develop persistent abdominal pain, severe bloating, vomiting, or changes in bowel habits lasting more than a few days."
+  },
+  {
+   "case": "It's 5pm, can I have a cappuccino?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "no_false_alarm": true
+   },
+   "cited": [
+    4
+   ],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 852,
+    "completion_tokens": 314
+   },
+   "first_token_s": 0.75,
+   "secs": 1.15,
+   "answer": "## From your brain\n- Coffee after 4\u202fpm makes you stay up until 2\u202fam, so a cappuccino at 5\u202fpm is likely to affect your sleep [#4].\n\n## General guidance\n- Caffeine can stay in the body for 4\u20136\u202fhours; drinking it late in the day can delay sleep onset and reduce sleep quality.\n\n## Do now\n- [ ] Skip the cappuccino now or switch to a decaf version.\n- [ ] If you really want a warm drink, choose herbal tea or warm milk with a little honey.\n\n## Next time\n- Plan your caffeine intake earlier in the day.\n- Keep a log of when you drink coffee and how long it takes you to fall asleep; adjust the cutoff time if needed.\n\n## See a doctor if\n- You develop chronic insomnia (trouble falling asleep most nights) despite limiting caffeine."
+  },
+  {
+   "case": "I'm sleeping in a hotel room with strong AC tonight",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "no_false_alarm": true
+   },
+   "cited": [
+    6
+   ],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 850,
+    "completion_tokens": 402
+   },
+   "first_token_s": 0.47,
+   "secs": 1.11,
+   "answer": "## From your brain\n- Strong AC while you sleep can lead to a blocked nose in the morning. You\u2019ve found that pointing the AC away and using a light blanket helps [#6].\n\n## General guidance\n- Keep the airflow directed away from your face and avoid direct drafts.\n- Maintain moderate room temperature (\u224822\u201124\u202f\u00b0C) and consider using a fan instead of full AC if possible.\n- Keep the room slightly humidified (e.g., a small bowl of water) to counter dry air.\n\n## Do now\n- [ ] Turn the AC vents so they blow away from your bed or body.  \n- [ ] Use a light blanket rather than heavy bedding.  \n- [ ] If possible, set the AC to a higher temperature or a \u201cfan\u201d mode to reduce direct cold air.  \n- [ ] Keep a glass of water nearby and sip warm water if you feel nasal dryness.\n\n## Next time\n- Before turning on the AC, adjust the vent direction and temperature in advance.  \n- Bring a small portable humidifier or place a bowl of water near the vent to add moisture to the air.  \n- Consider sleeping with a light scarf or mask to shield your nose from direct cold airflow.\n\n## See a doctor if\n- You develop persistent sinus pain, fever, or thick nasal discharge that doesn\u2019t improve after a few days.  \n- You notice wheezing, shortness of breath, or worsening allergy symptoms.  "
+  },
+  {
+   "case": "My throat is sore, can I have an iced tea?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "no_false_alarm": true
+   },
+   "cited": [
+    7
+   ],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 852,
+    "completion_tokens": 437
+   },
+   "first_token_s": 4.11,
+   "secs": 4.65,
+   "answer": "## From your brain\n- Cold drinks worsen a sore throat and should be avoided; instead, warm water with honey helps\u202f[#7].\n\n## General guidance\n- Keep the throat moist with warm (not hot) liquids\u2014herbal tea, broth, or warm water with honey/lemon.\n- Rest your voice and avoid yelling or whispering (both strain the throat).\n- Use a humidifier or inhale steam to ease irritation.\n- If you smoke or are exposed to second\u2011hand smoke, avoid it while your throat heals.\n\n## Do now\n- [ ] Skip the iced tea (cold drink)\u202f[#7].\n- [ ] Prepare a cup of warm tea (e.g., chamomile or ginger) and add a teaspoon of honey.\n- [ ] Sip slowly and stay hydrated with warm fluids throughout the day.\n- [ ] Rest your voice; limit talking if possible.\n\n## Next time\n- When you feel a sore throat coming on, choose warm beverages right away and keep cold drinks out of reach.\n- Keep a stash of honey, herbal tea bags, and a reusable warm\u2011drink bottle for quick relief.\n\n## See a doctor if\n- You develop a high fever (>101\u202f\u00b0F / 38.3\u202f\u00b0C), difficulty swallowing, or breathing problems.  \n- The sore throat lasts more than a week or is accompanied by swollen lymph nodes, rash, or persistent hoarseness."
+  },
+  {
+   "case": "I have crushing chest pain and my left arm is numb",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "emergency_first": true,
+    "alert_shown": true
+   },
+   "cited": [],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 851,
+    "completion_tokens": 330
+   },
+   "first_token_s": 1.35,
+   "secs": 1.36,
+   "answer": "**Call emergency services (e.g., 911) immediately and seek medical help now.**"
+  },
+  {
+   "case": "My throat is swelling and I can't breathe after eating peanuts",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "emergency_first": true,
+    "alert_shown": true
+   },
+   "cited": [],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 851,
+    "completion_tokens": 597
+   },
+   "first_token_s": 1.29,
+   "secs": 2.08,
+   "answer": "**Seek emergency medical help immediately (call your local emergency number or go to the nearest emergency department).**  \n\n## From your brain\nNo relevant entries.\n\n## General guidance\n- If you have an epinephrine auto\u2011injector, use it right away.\n- Call emergency services even if symptoms improve after using epinephrine.\n- Stay upright; if you feel light\u2011headed, lie down with legs raised unless breathing is difficult (then sit up).\n\n## Do now\n- [ ] Use epinephrine auto\u2011injector if you have one.\n- [ ] Call emergency services (e.g., 911) and describe the reaction.\n- [ ] Try to stay calm and keep your airway open; sit upright.\n- [ ] If possible, have someone stay with you until help arrives.\n\n## Next time\n- Get tested for peanut allergy and obtain an epinephrine auto\u2011injector if confirmed.\n- Carry the auto\u2011injector at all times and wear a medical\u2011alert bracelet.\n- Avoid all peanuts and foods that may contain peanuts; read labels carefully.\n- Practice the steps for using an auto\u2011injector so you\u2019re prepared.\n\n## See a doctor if\n- You experience any swelling, trouble breathing, hives, or throat tightness after eating peanuts or other foods.\n- You have recurrent mild reactions (even without breathing difficulty) to identify triggers and get prescribed emergency medication."
+  },
+  {
+   "case": "Going for a long hike in the hills tomorrow, any tips?",
+   "ok": false,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "no_false_alarm": true,
+    "no_unrelated_citations": false
+   },
+   "cited": [
+    2,
+    4,
+    5
+   ],
+   "model": "openai/gpt-oss-120b",
+   "provider": "groq",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 853,
+    "completion_tokens": 808
+   },
+   "first_token_s": 1.27,
+   "secs": 2.29,
+   "answer": "## From your brain\n- Getting soaked in the rain can lead to a sore throat the next day; you handle it by taking a hot shower right away and drying your hair fully [#2].  \n- Eating spicy food on an empty stomach gives you acidity; you avoid it by eating something plain first [#5].  \n- Coffee after 4\u202fpm makes it hard for you to fall asleep until 2\u202fam; you avoid it in the evening [#4].\n\n## General guidance\n- Pack lightweight, breathable layers; bring a waterproof jacket and a hat.  \n- Stay hydrated with water or electrolyte drinks, sipping regularly.  \n- Eat a balanced snack (carbs + protein) before you start and carry easy\u2011digest snacks for the trail.  \n- Use sunscreen and apply it 15\u202fmin before exposure.  \n- Take short walking breaks every 1\u20132\u202fh to stretch and check your footing.  \n- Carry a small first\u2011aid kit, map/compass, and a fully charged phone.\n\n## Do now\n- [ ] Lay out a moisture\u2011wicking base layer, a mid\u2011layer, and a waterproof outer layer.  \n- [ ] Pack a reusable water bottle and a few electrolyte tablets.  \n- [ ] Prepare a pre\u2011hike snack (e.g., whole\u2011grain toast with peanut butter) to avoid eating spicy food on an empty stomach.  \n- [ ] Leave coffee for the morning; if you need caffeine later, choose a small amount before 4\u202fpm.  \n- [ ] Check the weather forecast; if rain is expected, bring a rain cover for your pack.  \n- [ ] Pack a small towel or quick\u2011dry cloth for any unexpected wetness.  \n\n## Next time\n- Test a short walk in similar clothing to confirm comfort and that you don\u2019t overheat or get too cold.  \n- If you notice a sore throat after getting wet, plan a hot shower and warm tea with honey immediately after the hike.  \n\n## See a doctor if\n- You develop a fever, persistent cough, or worsening sore throat after the hike.  \n- You experience severe abdominal pain or vomiting after eating on the trail.  \n- You notice signs of dehydration (dizziness, very dark urine, rapid heartbeat)."
+  }
+ ]
+}

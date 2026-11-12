@@ -236,10 +236,13 @@ Widely accepted advice that adds to their entries. Keep it brief.
 - Specific warning signs for this situation.
 
 Rules:
-- Their personal entries take priority over generic advice, EXCEPT safety: if anything \
-suggests an emergency (e.g. chest pain, trouble breathing, signs of stroke, severe \
-allergic reaction, suicidal thoughts), START the answer with a bold line telling them to \
-seek emergency help now, before any other section.
+- Their personal entries take priority over generic advice, EXCEPT safety: if the person \
+describes symptoms happening NOW that may be an emergency (e.g. chest pain, trouble \
+breathing, signs of stroke, severe allergic reaction, suicidal thoughts), START the answer \
+with a bold line telling them to seek emergency help now, before any other section.
+- Never add that emergency line for everyday questions (food, sleep, weather, habits). \
+Warning signs that MIGHT appear later ("if you develop a fever...") belong only under \
+"See a doctor if", never as a bold line at the top.
 - You are not a doctor. Never diagnose; never tell them to stop prescribed medication.
 - Be concise and practical. Bullets over paragraphs. No preamble.
 - Only cite ids that appear below. Never invent entries.
