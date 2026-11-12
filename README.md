@@ -275,7 +275,7 @@ harness, then fixed one thing per PR, with numbers before and after each.
 | 2.6 | Local-first, open source, no hosting | Strangers' health notes shouldn't live on my server; a demo brain + screenshots show it instead |
 | 2.7 | Demo brain in its own database | Screenshots and demos never touch real data (1.6) |
 | 2.8 | Rejected Gemini's free tier | Its free tier uses content to improve Google's products, which defeats local-first |
-| 2.9 | CI on every PR plus a **weekly** run, with an `npm audit` gate; tests use a separate `TEST_DATABASE_URL` | The Oct 8 lockfile fails this gate (1 critical), so a weekly run would have caught 1.3 within days. Tests drop every table, so they never trust `DATABASE_URL` |
+| 2.9 | CI on every PR plus a **weekly** run, with an `npm audit` gate; tests use a separate `TEST_DATABASE_URL` | The Oct 8 lockfile fails this gate (1 critical), so a weekly run would have caught 1.3 within days. Tests drop every table, so they never trust `DATABASE_URL`. The first real run still failed twice where my local simulation passed: `setup-uv` has no floating `v10` tag, and the runner's newer npm (11.19) rejected a lockfile written by npm 11.6. Simulating CI isn't running CI |
 
 *Known gaps I chose not to fix (yet):* ingredient-level duplicates (lassi → curd), the emergency
 rule's false alarms, over-citation on unrelated questions, the unverified phone install, and
