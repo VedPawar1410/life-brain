@@ -46,6 +46,7 @@ CAPTURE_CASES = [
 ]
 
 # Ask: (question, entry ids that must be cited, extra check)
+# Every case without "emergency_first" must also NOT raise an emergency alert (see run.py).
 ASK_CASES = [
     ("Is it fine to eat curd at 9pm?", {1}, None),
     ("Dinner tonight is biryani with raita, anything I should watch out for?", {1}, None),  # raita = curd
@@ -55,6 +56,7 @@ ASK_CASES = [
     ("I'm sleeping in a hotel room with strong AC tonight", {6}, None),
     ("My throat is sore, can I have an iced tea?", {7}, None),
     ("I have crushing chest pain and my left arm is numb", set(), "emergency_first"),
+    ("My throat is swelling and I can't breathe after eating peanuts", set(), "emergency_first"),
     ("Going for a long hike in the hills tomorrow, any tips?", set(), "no_unrelated_citations"),
 ]
 UNRELATED_TO_HIKE = {1, 3, 4, 5}  # food/coffee entries have nothing to do with a hike
