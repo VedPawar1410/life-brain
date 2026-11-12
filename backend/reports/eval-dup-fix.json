@@ -1,0 +1,328 @@
+{
+ "run_at": "2026-11-12T06:40:13+00:00",
+ "git_commit": "6f5cf3b-dirty",
+ "models": {
+  "capture": "openai/gpt-oss-20b",
+  "ask": "openai/gpt-oss-120b",
+  "fallback": "openai/gpt-oss-20b"
+ },
+ "brain_entries": 8,
+ "summary": {
+  "capture_pass": "6/6",
+  "capture_llm_alone_dup_correct": "5/6",
+  "ask_pass": "9/9",
+  "ask_avg_total_tokens": 1426.33,
+  "ask_avg_prompt_tokens": 936.78,
+  "ask_avg_secs": 1.79,
+  "ask_avg_first_token_s": 1.16,
+  "ask_fallbacks": 0
+ },
+ "capture": [
+  {
+   "case": "I get acidity if I drink tea first thing in the morning without eating",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    5,
+    null
+   ],
+   "llm_alone_dup": null,
+   "final_dup": null,
+   "tags": [
+    "tea",
+    "acidity",
+    "morning"
+   ],
+   "to_do": [],
+   "secs": 1.4
+  },
+  {
+   "case": "eating yogurt after dinner gave me a cough again",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    1
+   ],
+   "llm_alone_dup": null,
+   "final_dup": 1,
+   "tags": [
+    "food",
+    "curd"
+   ],
+   "to_do": [],
+   "secs": 1.13
+  },
+  {
+   "case": "whenever I get wet in the rain my throat hurts",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    2
+   ],
+   "llm_alone_dup": 2,
+   "final_dup": 2,
+   "tags": [
+    "rain",
+    "cold",
+    "throat"
+   ],
+   "to_do": [],
+   "secs": 0.75
+  },
+  {
+   "case": "I can't sleep if I have coffee in the evening",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    4
+   ],
+   "llm_alone_dup": 4,
+   "final_dup": 4,
+   "tags": [
+    "coffee",
+    "sleep"
+   ],
+   "to_do": [
+    "Avoid coffee in the evening"
+   ],
+   "secs": 0.68
+  },
+  {
+   "case": "Mangoes give me pimples",
+   "ok": true,
+   "checks": {
+    "duplicate": true,
+    "no_invented_advice": true
+   },
+   "acceptable": [
+    null
+   ],
+   "llm_alone_dup": null,
+   "final_dup": null,
+   "tags": [
+    "food",
+    "skin"
+   ],
+   "to_do": [],
+   "secs": 1.96
+  },
+  {
+   "case": "Long phone scrolling at night makes my eyes hurt; turning on night mode helps",
+   "ok": true,
+   "checks": {
+    "duplicate": true
+   },
+   "acceptable": [
+    null
+   ],
+   "llm_alone_dup": null,
+   "final_dup": null,
+   "tags": [
+    "screen",
+    "eye",
+    "night"
+   ],
+   "to_do": [
+    "Turn on night mode"
+   ],
+   "secs": 0.44
+  }
+ ],
+ "ask": [
+  {
+   "case": "Is it fine to eat curd at 9pm?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true
+   },
+   "cited": [
+    1
+   ],
+   "model": "openai/gpt-oss-120b",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 794,
+    "completion_tokens": 414
+   },
+   "first_token_s": 0.7,
+   "secs": 1.26,
+   "answer": "## From your brain\n- Eating curd in the evening leads to cold and cough the next day, so you **avoid curd, raita, lassi or yogurt after 7\u202fpm** [#1].\n\n## General guidance\n- Late\u2011night dairy can be harder to digest for many people and may increase mucus production, which can worsen throat symptoms. If you want a snack later, choose something lighter and less likely to trigger congestion (e.g., a small piece of fruit or a handful of nuts).\n\n## Do now\n- [ ] Skip the curd at 9\u202fpm; have it earlier (e.g., at lunch) as you already do.\n- [ ] If you really want something dairy\u2011based now, try a small portion of warm milk with a pinch of turmeric instead of cold curd.\n- [ ] Drink a warm herbal tea (e.g., ginger or chamomile) to soothe your throat.\n\n## Next time\n- Plan dairy intake before 7\u202fpm.\n- Keep a list of alternative evening snacks ready so you don\u2019t default to curd out of habit.\n\n## See a doctor if\n- You develop a persistent cough lasting more than a week, fever, or wheezing after eating dairy.\n- You notice swelling, hives, or difficulty breathing after any dairy product."
+  },
+  {
+   "case": "Dinner tonight is biryani with raita, anything I should watch out for?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true
+   },
+   "cited": [
+    1
+   ],
+   "model": "openai/gpt-oss-120b",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 799,
+    "completion_tokens": 403
+   },
+   "first_token_s": 1.28,
+   "secs": 1.85,
+   "answer": "## From your brain\n- Eating curd or raita after 7\u202fpm can give you a cold and cough the next day, so avoid having it with your biryani at night [#1].\n\n## General guidance\n- Spicy or heavy meals close to bedtime can affect digestion and sleep; give yourself a light, plain snack (e.g., toast) if you feel too full before bed.\n\n## Do now\n- [ ] Skip the raita or have it **before** 7\u202fpm (e.g., as part of a midday snack).  \n- [ ] If you still want a cooling side, choose a **plain cucumber salad** or a small amount of plain yogurt without added spices, and eat it earlier.  \n- [ ] Drink warm water with honey if you feel any throat irritation after the meal.\n\n## Next time\n- Plan to finish curd\u2011based dishes **before** the evening cutoff (7\u202fpm) or replace them with non\u2011dairy alternatives for dinner.  \n- Pair spicy biryani with a plain carbohydrate (like plain rice or bread) to buffer acidity.\n\n## See a doctor if\n- You develop a fever, persistent cough, or difficulty breathing after the meal.  \n- You notice swelling, hives, or throat tightening indicating an allergic reaction."
+  },
+  {
+   "case": "I just got soaked in the rain, what now?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true
+   },
+   "cited": [
+    2
+   ],
+   "model": "openai/gpt-oss-120b",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 793,
+    "completion_tokens": 465
+   },
+   "first_token_s": 0.93,
+   "secs": 1.45,
+   "answer": "## From your brain\n- Getting wet from rain can lead to a sore throat the next day. Your routine is to **take a hot shower right away, dry your hair completely, and avoid staying in wet clothes** [#2].\n\n## General guidance\n- Warm up gradually after being cold/wet to prevent chill.\n- Stay hydrated and consider a warm herbal tea with honey to soothe the throat.\n- Keep your environment at a comfortable temperature and avoid drafts.\n\n## Do now\n- [ ] Take a **hot shower** as soon as possible.  \n- [ ] **Dry your hair fully** with a towel or hair dryer on a low\u2011warm setting.  \n- [ ] Change into **dry, warm clothing** (preferably cotton or breathable fabrics).  \n- [ ] Sip **warm water or tea with honey** to start soothing any irritation.  \n\n## Next time\n- Carry an umbrella or raincoat when rain is forecast.  \n- Keep a spare set of dry clothes and a towel in your bag or car.  \n- If you get wet, **change out of wet clothes immediately** and warm up before sitting still.\n\n## See a doctor if\n- You develop a fever, persistent cough, or the sore throat worsens after 2\u20133 days.  \n- You have difficulty swallowing, breathing problems, or swollen lymph nodes.  \n- Any signs of an ear infection (pain, drainage) appear.  "
+  },
+  {
+   "case": "Can I have a banana with a glass of cold water as a snack?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true
+   },
+   "cited": [
+    3
+   ],
+   "model": "openai/gpt-oss-120b",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 797,
+    "completion_tokens": 483
+   },
+   "first_token_s": 0.96,
+   "secs": 1.43,
+   "answer": "## From your brain\n- Drinking cold water right after a banana gives you bloating; you should sip warm water instead and avoid cold water after banana [#3].\n\n## General guidance\n- Fruit and water together are fine, but cold liquids can slow digestion for some people. Warm or room\u2011temperature water is gentler on the stomach.\n\n## Do now\n- [ ] Skip the cold water with the banana.  \n- [ ] If you want a drink, sip warm water (or let a cold drink sit until it reaches room temperature) after eating the banana.  \n- [ ] If you\u2019ve already had cold water and feel bloated, walk gently for 5\u201110\u202fminutes and drink a cup of warm water with a pinch of ginger or honey.\n\n## Next time\n- Pair bananas with warm/room\u2011temp water or wait 20\u201330\u202fminutes before drinking any cold beverage.  \n- Keep a reusable bottle of warm water handy for snack times.\n\n## See a doctor if\n- Bloating is severe, persistent, or accompanied by abdominal pain, vomiting, or changes in bowel habits."
+  },
+  {
+   "case": "It's 5pm, can I have a cappuccino?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true
+   },
+   "cited": [
+    4
+   ],
+   "model": "openai/gpt-oss-120b",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 794,
+    "completion_tokens": 305
+   },
+   "first_token_s": 0.74,
+   "secs": 1.09,
+   "answer": "## From your brain\n- Coffee after 4\u202fpm makes you stay up until\u202f2\u202fam, so you should avoid it after that time\u202f[#4].\n\n## General guidance\n- Caffeine can disrupt sleep for up to 6\u202fhours; if you need to stay alert later, choose a low\u2011caffeine or decaf option.\n\n## Do now\n- [ ] Skip the cappuccino now or switch to a decaf version.\n- [ ] If you really want a warm drink, try herbal tea or warm milk with honey.\n\n## Next time\n- Plan to have coffee before 4\u202fpm, or keep a decaf/herbal alternative on hand for later afternoons.\n\n## See a doctor if\n- You experience chronic insomnia, excessive daytime sleepiness, or anxiety that you think might be linked to caffeine."
+  },
+  {
+   "case": "I'm sleeping in a hotel room with strong AC tonight",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true
+   },
+   "cited": [
+    6
+   ],
+   "model": "openai/gpt-oss-120b",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 1048,
+    "completion_tokens": 556
+   },
+   "first_token_s": 1.94,
+   "secs": 2.63,
+   "answer": "## From your brain\n- Sleeping with AC pointed at you can cause a blocked nose in the morning; you should **point the AC away and use a light blanket** [#6].\n\n## General guidance\n- Keep the AC temperature around 22\u201124\u202f\u00b0C (71\u201175\u202f\u00b0F) and avoid direct airflow on your face or body.  \n- Use a fan or a towel to diffuse the cold air if you can\u2019t reposition the vent.  \n- Stay hydrated; drink warm fluids before bed.  \n- If the room feels too dry, place a bowl of water nearby to add humidity.\n\n## Do now\n- [ ] Check the AC vent direction; rotate it so the airflow is toward the wall or ceiling, not straight at you.  \n- [ ] Lower the temperature to a comfortable, moderate setting (\u224822\u202f\u00b0C).  \n- [ ] Grab a light blanket or sheet to cover yourself without overheating.  \n- [ ] Sip a warm drink (e.g., herbal tea with honey) before sleeping.  \n\n## Next time\n- Before arriving, request a room where the AC vents can be adjusted or turned off.  \n- Bring a portable fan or a small pillow to block direct airflow.  \n- Keep a reusable water bottle with warm water to stay hydrated throughout the night.  \n\n## See a doctor if\n- Nasal blockage persists for more than a few days, is accompanied by facial pain or pressure, fever, or thick green/yellow discharge.  \n- You develop shortness of breath, wheezing, or severe sinus infection symptoms.  "
+  },
+  {
+   "case": "My throat is sore, can I have an iced tea?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true
+   },
+   "cited": [
+    7
+   ],
+   "model": "openai/gpt-oss-120b",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 1306,
+    "completion_tokens": 405
+   },
+   "first_token_s": 1.08,
+   "secs": 1.67,
+   "answer": "## From your brain\n- Cold drinks make a sore throat worse and should be avoided; instead drink warm water with honey [#7].\n\n## General guidance\n- Keep your throat moist with warm fluids (herbal tea, warm water, broth).  \n- Use a humidifier or steam inhalation to soothe irritation.  \n- Avoid smoking, alcohol, and spicy foods while your throat is inflamed.\n\n## Do now\n- [ ] Skip the iced tea; choose a warm beverage (e.g., warm tea with honey).  \n- [ ] Sip slowly and stay hydrated throughout the day.  \n- [ ] If you have honey, add a teaspoon to warm water or tea.  \n- [ ] Rest your voice as much as possible.\n\n## Next time\n- Plan ahead by having warm drinks ready when you feel a sore throat coming on.  \n- Keep a supply of honey or throat lozenges to avoid reaching for cold drinks.  \n\n## See a doctor if\n- Fever >\u202f38\u202f\u00b0C (100.4\u202f\u00b0F) or lasts more than 3\u202fdays.  \n- Severe pain, difficulty swallowing, or breathing problems.  \n- White patches or pus on the tonsils.  \n- Symptoms persist beyond a week or worsen despite home care."
+  },
+  {
+   "case": "I have crushing chest pain and my left arm is numb",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "emergency_first": true
+   },
+   "cited": [],
+   "model": "openai/gpt-oss-120b",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 1305,
+    "completion_tokens": 668
+   },
+   "first_token_s": 1.53,
+   "secs": 2.57,
+   "answer": "**Seek emergency medical help immediately (call emergency services or go to the nearest emergency department).**\n\n## From your brain\nNo personal entries directly address chest pain or arm numbness.\n\n## General guidance\n- Crushing chest pain with arm numbness can be a sign of a heart attack.  \n- Do not wait for symptoms to improve; rapid medical evaluation is critical.  \n- Chew an aspirin (if not allergic) while waiting for help, unless instructed otherwise by a medical professional.\n\n## Do now\n- [ ] Call emergency services (e.g., 911) right away.  \n- [ ] If you\u2019re alone, unlock your door and sit upright or lie down with knees bent.  \n- [ ] If you have aspirin and are not allergic, chew one regular\u2011strength tablet (325\u202fmg) while waiting for responders.  \n- [ ] Keep a phone nearby to relay any changes in symptoms to the dispatcher.\n\n## Next time\n- Recognize early warning signs (pressure, squeezing, or heaviness in chest; pain spreading to arm, jaw, or back; shortness of breath, nausea, sweating).  \n- Keep emergency numbers programmed in your phone and consider wearing a medical ID if you have known heart risk factors.\n\n## See a doctor if\n- Chest pain recurs, worsens, or is accompanied by shortness of breath, sweating, nausea, or dizziness.  \n- You have a history of heart disease, high blood pressure, high cholesterol, or diabetes.  \n- Any new or unexplained numbness or tingling in limbs persists after the acute episode."
+  },
+  {
+   "case": "Going for a long hike in the hills tomorrow, any tips?",
+   "ok": true,
+   "checks": {
+    "answered": true,
+    "cites_expected": true,
+    "no_invented_ids": true,
+    "no_unrelated_citations": true
+   },
+   "cited": [],
+   "model": "openai/gpt-oss-120b",
+   "fallback": false,
+   "usage": {
+    "prompt_tokens": 795,
+    "completion_tokens": 707
+   },
+   "first_token_s": 1.24,
+   "secs": 2.14,
+   "answer": "## From your brain\nNo personal entries directly address long hikes.\n\n## General guidance\n- **Hydrate**: sip water regularly; avoid only large amounts at once.  \n- **Fuel**: bring easy\u2011digestible carbs (e.g., bananas, trail mix) and a small protein snack.  \n- **Layer**: dress in moisture\u2011wicking base, insulating mid\u2011layer, and wind\u2011/rain\u2011proof outer layer.  \n- **Foot care**: wear broken\u2011in hiking boots or shoes, use breathable socks, and bring blister pads.  \n- **Pace**: start slower than you think you need; use \u201ctalk test\u201d to keep effort moderate.  \n- **Sun protection**: hat, sunglasses, SPF\u202f30+ sunscreen, and reapply every 2\u202fh.  \n- **Navigation & safety**: map/compass or fully charged GPS, let someone know your route and expected return.  \n- **Rain**: if you get wet, change into dry clothes ASAP and consider a quick warm shower later to avoid sore throat.  \n\n## Do now\n- [ ] Check the weather forecast; pack rain gear if needed.  \n- [ ] Lay out clothing layers (base, mid, shell) and pack extra socks.  \n- [ ] Fill a reusable water bottle (\u22482\u202fL) and add electrolyte tablets.  \n- [ ] Pack snacks: banana, trail mix, energy bars, and a small sandwich.  \n- [ ] Charge phone/GPS and load the trail map.  \n- [ ] Inspect boots/shoes for wear; apply blister prevention tape if needed.  \n- [ ] Assemble a small first\u2011aid kit (band\u2011aid, blister pads, antihistamine).  \n\n## Next time\n- Track how much water you actually drink and adjust amount for temperature/humidity.  \n- Test a short practice hike with your gear to spot any discomfort before a long trek.  \n- Keep a quick \u201crain\u2011wet\u2011to\u2011dry\u201d routine (dry clothes, warm shower) ready for post\u2011hike recovery.\n\n## See a doctor if\n- You develop chest pain, severe shortness of breath, or dizziness during or after the hike.  \n- You experience a high fever, persistent cough, or worsening sore throat that doesn't improve with rest and warm fluids."
+  }
+ ]
+}

@@ -56,12 +56,18 @@ def resolve_duplicate(draft: llm.CaptureDraft, entries: list[Entry]) -> llm.Capt
     return draft
 
 
+# One shared tag is too weak once a brain has more than a handful of entries: generic tags
+# like "food" or "night" connect unrelated notes (mango pimples -> curd at night). Two shared
+# tags kept every true duplicate and removed both false ones in the eval (reports/).
+MIN_SHARED_TAGS = 2
+
+
 def most_shared_tags(tags: list[str], entries: list[Entry]) -> tuple[Entry, list[str]] | None:
-    """The existing entry sharing the most tags with `tags`, if any share at least one."""
+    """The existing entry sharing the most tags with `tags`, if it shares at least MIN_SHARED_TAGS."""
     wanted = {t.strip().lower() for t in tags}
     best: tuple[Entry, list[str]] | None = None
     for entry in entries:
         shared = [t for t in entry.tags if t in wanted]
-        if shared and (best is None or len(shared) > len(best[1])):
+        if len(shared) >= MIN_SHARED_TAGS and (best is None or len(shared) > len(best[1])):
             best = (entry, shared)
     return best
