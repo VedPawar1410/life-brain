@@ -27,7 +27,7 @@ export default function BottomNav() {
                 href={href}
                 aria-current={active ? "page" : undefined}
                 className={`flex flex-col items-center gap-0.5 pt-2 pb-1.5 text-[11px] font-medium ${
-                  active ? "text-accent" : "text-subtle"
+                  active ? "text-accent" : "text-muted"
                 }`}
               >
                 {/* A soft pill behind the active icon marks the current tab. */}
