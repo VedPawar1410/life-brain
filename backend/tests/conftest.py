@@ -3,8 +3,12 @@ import os
 from contextlib import nullcontext
 from types import SimpleNamespace
 
-# Point the app at the test database *before* app modules create their engine.
-os.environ["DATABASE_URL"] = "postgresql+psycopg://localhost/life_brain_test"
+# Point the app at the test database *before* app modules create their engine. Tests drop
+# every table, so they never honour DATABASE_URL (it may point at your real brain); CI sets
+# the separate TEST_DATABASE_URL instead.
+os.environ["DATABASE_URL"] = os.environ.get(
+    "TEST_DATABASE_URL", "postgresql+psycopg://localhost/life_brain_test"
+)
 # Hermetic: never use a real Claude key from backend/.env (env vars beat .env). Tests that
 # need Claude install a fake client via the fake_claude fixture.
 os.environ["ANTHROPIC_API_KEY"] = ""
