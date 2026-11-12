@@ -17,5 +17,12 @@ class Settings(BaseSettings):
     ask_model: str = "openai/gpt-oss-120b"
     fallback_model: str = "openai/gpt-oss-20b"
 
+    # Optional paid fallback: Claude, used only when every Groq model is rate-limited or down.
+    # Leave ANTHROPIC_API_KEY empty to never pay (Claude is then skipped entirely).
+    anthropic_api_key: str = ""
+    claude_model: str = "claude-haiku-5-5"
+    # Order providers are tried in. ["groq"] = free only; ["claude"] = Claude only (eval).
+    providers: list[str] = ["groq", "claude"]
+
 
 settings = Settings()

@@ -44,6 +44,12 @@ API docs: http://localhost:8000/docs · Tests: `uv run pytest` (LLM mocked, free
 Get a free key at https://console.groq.com and set `LLM_API_KEY` in `backend/.env`.
 Any OpenAI-compatible provider works — just change `LLM_BASE_URL` and the model names.
 
+**Optional paid fallback: Claude.** Set `ANTHROPIC_API_KEY` in `backend/.env` and the app falls
+back to Claude Haiku 5.5 only when every Groq model is rate-limited or down (before any text has
+streamed, so an answer never mixes models). Leave it empty and Claude is never called.
+`PROVIDERS` sets the order (`["groq"]` = free only, `["claude"]` = Claude only).
+Measured on the eval: **~$0.0005 per answer** on Haiku 5.5 (a full 15-case run cost $0.0055).
+
 Free-tier limits (checked Oct 2026, see https://console.groq.com/docs/rate-limits):
 **8K tokens/minute, 200K tokens/day, 30 requests/minute** per model. One capture uses ~1.5K tokens,
 so that's about 5 captures/minute. Hitting the limit returns HTTP 429 → "try again in a minute".

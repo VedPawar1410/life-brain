@@ -1,6 +1,6 @@
 import json
 
-from tests.conftest import rate_limit_error
+from tests.conftest import claude_rate_limit_error, rate_limit_error
 
 
 def _events(res):
@@ -19,7 +19,7 @@ def test_ask_streams_answer_with_entries_in_prompt(client, fake_llm):
 
     events = _events(res)
     assert events[0] == {"type": "entries", "ids": [rain["id"]]}
-    assert events[1] == {"type": "meta", "model": "openai/gpt-oss-120b", "fallback": False}
+    assert events[1] == {"type": "meta", "model": "openai/gpt-oss-120b", "provider": "groq", "fallback": False}
     assert "".join(e["text"] for e in events if e["type"] == "delta") == "## From your brain\nHot shower [#1]"
     assert events[-2] == {"type": "done", "usage": {"prompt_tokens": 100, "completion_tokens": 20}}
     assert events[-1]["type"] == "saved"
@@ -34,7 +34,7 @@ def test_ask_streams_answer_with_entries_in_prompt(client, fake_llm):
 def test_ask_falls_back_to_smaller_model_on_rate_limit(client, fake_llm):
     fake = fake_llm(rate_limit_error(), ["ok"])
     events = _events(client.post("/ask", json={"question": "what now?"}))
-    assert events[1] == {"type": "meta", "model": "openai/gpt-oss-20b", "fallback": True}
+    assert events[1] == {"type": "meta", "model": "openai/gpt-oss-20b", "provider": "groq", "fallback": True}
     assert [c["model"] for c in fake.calls] == ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]
 
 
@@ -83,3 +83,43 @@ def test_history_newest_first_and_delete(client, fake_llm):
 
     assert client.delete("/asks/1").status_code == 204
     assert client.get("/asks/1").status_code == 404
+
+
+def test_ask_falls_back_to_claude_when_all_groq_models_rate_limited(client, fake_llm, fake_claude):
+    fake_llm(rate_limit_error(), rate_limit_error())
+    claude = fake_claude(["Hot shower ", "[#1]"])
+    events = _events(client.post("/ask", json={"question": "soaked, what now?"}))
+
+    assert events[1] == {"type": "meta", "model": "claude-haiku-5-5", "provider": "claude", "fallback": True}
+    assert "".join(e["text"] for e in events if e["type"] == "delta") == "Hot shower [#1]"
+    assert events[-2] == {"type": "done", "usage": {"prompt_tokens": 50, "completion_tokens": 10}}
+    call = claude.calls[0]
+    assert "emergency" in call["system"]  # same safety prompt as Groq
+    assert call["messages"] == [{"role": "user", "content": "soaked, what now?"}]
+    assert "temperature" not in call  # Haiku 5.5 rejects non-default sampling values
+
+
+def test_ask_without_claude_key_never_calls_claude(client, fake_llm, monkeypatch):
+    from app import llm
+    monkeypatch.setattr(llm, "get_claude_client", lambda: (_ for _ in ()).throw(AssertionError("called Claude")))
+    fake_llm(rate_limit_error(), rate_limit_error())
+    events = _events(client.post("/ask", json={"question": "what now?"}))
+    assert events[-1]["type"] == "error"
+
+
+def test_ask_error_when_claude_also_rate_limited(client, fake_llm, fake_claude):
+    fake_llm(rate_limit_error(), rate_limit_error())
+    fake_claude(claude_rate_limit_error())
+    events = _events(client.post("/ask", json={"question": "what now?"}))
+    assert events[-1]["type"] == "error"
+    assert client.get("/asks").json() == []
+
+
+def test_providers_setting_can_make_claude_the_only_provider(client, fake_llm, fake_claude, monkeypatch):
+    from app.config import settings
+    monkeypatch.setattr(settings, "providers", ["claude"])
+    groq = fake_llm()  # no replies queued: any Groq call would fail the test
+    fake_claude(["ok"])
+    events = _events(client.post("/ask", json={"question": "what now?"}))
+    assert events[1]["provider"] == "claude" and events[1]["fallback"] is False
+    assert groq.calls == []

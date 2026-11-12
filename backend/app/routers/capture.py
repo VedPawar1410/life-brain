@@ -1,3 +1,4 @@
+import anthropic
 import openai
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field
@@ -29,9 +30,9 @@ def capture(body: CaptureRequest, db: Session = Depends(get_db)):
         context = (ask.question, ask.answer)
     try:
         draft = llm.extract_entry(body.text, entries, context=context)
-    except openai.RateLimitError:
+    except llm.LLMUnavailable:
         raise HTTPException(status.HTTP_429_TOO_MANY_REQUESTS, "LLM rate limit hit, try again in a minute")
-    except (openai.APIError, ValueError) as err:
+    except (openai.APIError, anthropic.APIError, ValueError) as err:
         raise HTTPException(status.HTTP_502_BAD_GATEWAY, f"LLM error: {err}")
 
     return resolve_duplicate(draft, entries)

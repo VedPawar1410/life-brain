@@ -1,4 +1,7 @@
-from tests.conftest import rate_limit_error
+import httpx
+import openai
+
+from tests.conftest import claude_rate_limit_error, rate_limit_error
 
 DRAFT = {
     "title": "Banana followed by water",
@@ -150,3 +153,32 @@ def test_merge_preview_returns_combined_entry_without_saving(client):
     # ...until the user saves their edited version (here: dropping the tea).
     client.patch(f"/entries/{entry['id']}", json={**preview, "to_do": ["Dry clothes first"]})
     assert client.get(f"/entries/{entry['id']}").json()["to_do"] == ["Dry clothes first"]
+
+
+def test_capture_falls_back_to_claude_on_groq_rate_limit(client, fake_llm, fake_claude):
+    fake_llm(rate_limit_error())
+    claude = fake_claude(DRAFT)
+    res = client.post("/capture", json={"text": "banana then water makes me bloated"})
+    assert res.status_code == 200
+    assert res.json()["title"] == "Banana followed by water"
+
+    call = claude.calls[0]
+    assert call["model"] == "claude-haiku-5-5"
+    assert call["output_config"]["format"]["schema"]["additionalProperties"] is False
+    assert call["output_config"]["effort"] == "low"
+    assert "temperature" not in call
+    assert call["messages"] == [{"role": "user", "content": "banana then water makes me bloated"}]
+
+
+def test_capture_429_when_groq_and_claude_both_rate_limited(client, fake_llm, fake_claude):
+    fake_llm(rate_limit_error())
+    fake_claude(claude_rate_limit_error())
+    assert client.post("/capture", json={"text": "banana then water"}).status_code == 429
+
+
+def test_capture_does_not_fall_back_on_a_bad_request(client, fake_llm, fake_claude):
+    request = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
+    fake_llm(openai.BadRequestError("bad", response=httpx.Response(400, request=request), body=None))
+    claude = fake_claude(DRAFT)
+    assert client.post("/capture", json={"text": "banana then water"}).status_code == 502
+    assert claude.calls == []  # a 400 would fail the same way everywhere: don't pay to find out

@@ -130,7 +130,7 @@ export default function AskPage() {
             {turn.done && !turn.error && (
               <p className="mt-3 border-t border-line pt-2 text-xs text-muted">
                 Not medical advice. {turn.model?.replace("openai/", "")}
-                {turn.fallback && " (lighter fallback model: main model was rate-limited)"}
+                {turn.fallback && " (fallback: the main model was busy)"}
                 {turn.tokens && ` · ${turn.tokens.toLocaleString()} tokens`}
               </p>
             )}
