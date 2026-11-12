@@ -87,6 +87,8 @@ with no database writes. Each report records the commit, models, every answer an
 | `eval-dup-fix.json` | **6/6** | 9/9 | 1.79 s / 1.16 s | Duplicate rule needs 2 shared tags |
 | `eval-provider-chain-groq.json` | 6/6 | 8/9 | 2.23 s / 1.28 s | Hike question cited all 8 entries (prompt unchanged; variance) |
 | `eval-claude-haiku.json` (Claude only) | 5/6 | 8/9 | 4.61 s / 2.18 s | Whole run cost **$0.0055** (18K in / 7.5K out tokens) |
+| `eval-false-alarm-baseline.json` | 6/6 | 9/10 | | Adds a no-false-alarm check on 8 harmless questions and a 2nd emergency case |
+| `eval-false-alarm-fix.json` | 6/6 | 9/10 | | Tightened emergency rule: 0/8 false alarms, 2/2 emergencies alerted |
 
 **Before vs after the November 2026 revive**
 
@@ -229,8 +231,10 @@ in `package-lock.json`).
   was *not* flagged against "Curd at night": the model didn't connect lassi to curd at capture time
   (it did connect raita to curd at ask time) and the draft shared only one tag. You can still merge
   by hand.
-- **The emergency rule over-fires.** For a harmless dinner question the answer opened with "seek
-  emergency care if…" (see the screenshot). No eval case checks for false alarms yet.
+- **Emergency false alarms are reduced, not proven gone.** The model used to promote conditional
+  warnings ("if you develop a fever…") to a red emergency alert on harmless questions (1 in 12
+  repeated runs). The prompt now separates symptoms happening *now* from warning signs to watch for:
+  0 in 12 after, with both real emergencies still alerted. Twelve runs can't prove a rare bug is gone.
 - **Over-citation.** On a question unrelated to most entries (a hike), answers sometimes cite
   entries that don't apply (all 8 in one Groq run).
 - **The eval is a smoke test, not a benchmark.** 15 cases, one run each; results vary between runs
@@ -284,11 +288,11 @@ harness, then fixed one thing per PR, with numbers before and after each.
 | 2.7 | Demo brain in its own database | Screenshots and demos never touch real data (1.6) |
 | 2.8 | Rejected Gemini's free tier | Its free tier uses content to improve Google's products, which defeats local-first |
 | 2.9 | CI on every PR plus a **weekly** run, with an `npm audit` gate; tests use a separate `TEST_DATABASE_URL` | The Oct 8 lockfile fails this gate (1 critical), so a weekly run would have caught 1.3 within days. Tests drop every table, so they never trust `DATABASE_URL`. The first real run still failed twice where my local simulation passed: `setup-uv` has no floating `v10` tag, and the runner's newer npm (11.19) rejected a lockfile written by npm 11.6. Simulating CI isn't running CI |
-
 | 2.10 | Pad by `env(safe-area-inset-*)`; `<body>` uses `min-h-lvh` instead of `h-full`/`min-h-full` | Fixes 1.10. In the installed app "100%" height excludes the status bar, so on short pages iOS anchored the fixed nav to a shorter page. Found only by testing on the phone. (Also learned: running `npm ci` under a live dev server corrupts Turbopack's cache; stop the server first.) |
+| 2.11 | No-false-alarm check on every harmless eval question; emergency rule limited to symptoms happening now | The redesign turned the emergency line into a red alert, which made false alarms worse. Measured with 12 repeated runs (1 → 0 false alarms) while keeping 2/2 real emergencies alerted |
 
-*Known gaps I chose not to fix (yet):* ingredient-level duplicates (lassi → curd), the emergency
-rule's false alarms, over-citation on unrelated questions, Android testing, and dev-only linter
+*Known gaps I chose not to fix (yet):* ingredient-level duplicates (lassi → curd), rare emergency
+false alarms (reduced, not proven gone), over-citation on unrelated questions, Android testing, and dev-only linter
 advisories.
 
 ### Key takeaways
@@ -304,8 +308,8 @@ advisories.
 
 0. **A full UI/UX redesign** (next): a new colour palette and typography, a real icon set
    instead of emojis, and clearer flows. The current UI is functional but looks like a prototype.
-1. Eval cases for ingredient-level duplicates (lassi, raita, paneer → curd) and for **no false
-   emergency alarm on benign questions**, then prompt fixes measured against them.
+1. Eval cases for ingredient-level duplicates (lassi, raita, paneer → curd), then a prompt fix
+   measured against them.
 2. "Only cite entries that genuinely apply" in the Ask prompt, measured on the hike case.
 3. `select_entries()` retrieval (tags/keywords first, then pgvector) once a brain passes ~100 entries.
 4. A packaged setup (Docker Compose or SQLite) so non-developers can run it.

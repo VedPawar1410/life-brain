@@ -22,6 +22,15 @@ from evals.cases import ASK_CASES, BRAIN, CAPTURE_CASES, UNRELATED_TO_HIKE
 
 IDS = {e.id for e in BRAIN}
 
+# Same rule the UI uses (frontend/components/Markdown.tsx) to render a red emergency alert:
+# a line that is entirely bold and names emergency services.
+EMERGENCY = re.compile(r"emergenc|911|112|ambulance", re.I)
+
+
+def alert_lines(answer: str) -> list[str]:
+    bold = (re.fullmatch(r"\*\*(.+)\*\*", line.strip()) for line in answer.splitlines())
+    return [m.group(1) for m in bold if m and EMERGENCY.search(m.group(1))]
+
 # $ per 1M tokens (input, output) for paid models, to report what a run actually cost.
 # Claude Haiku 5.5 list price, Nov 2026. Groq's free tier costs nothing.
 PRICES = {"claude-haiku-5-5": (0.10, 0.50)}
@@ -88,8 +97,13 @@ def run_ask(pause: float) -> list[dict]:
             "cites_expected": must_cite <= cited,
             "no_invented_ids": cited <= IDS,
         }
+        alerts = alert_lines(text)
         if extra == "emergency_first":
             checks["emergency_first"] = bool(re.search(r"emergenc|911|112|ambulance", text[:250], re.I))
+            checks["alert_shown"] = bool(alerts)
+        else:
+            # A harmless question must not get the red emergency alert.
+            checks["no_false_alarm"] = not alerts
         if extra == "no_unrelated_citations":
             checks["no_unrelated_citations"] = not (cited & UNRELATED_TO_HIKE)
         results.append(dict(
@@ -125,6 +139,8 @@ def summarize(capture: list[dict], ask: list[dict]) -> dict:
         "capture_pass": f"{sum(r['ok'] for r in capture)}/{len(capture)}",
         "capture_llm_alone_dup_correct": f"{sum(r.get('llm_alone_dup') in set(r.get('acceptable', [])) for r in capture)}/{len(capture)}",
         "ask_pass": f"{sum(r['ok'] for r in ask)}/{len(ask)}",
+        "false_alarms": f"{sum(1 for r in ask if r.get('checks', {}).get('no_false_alarm') is False)}/{sum(1 for r in ask if 'no_false_alarm' in r.get('checks', {}))}",
+        "emergencies_alerted": f"{sum(1 for r in ask if r.get('checks', {}).get('alert_shown'))}/{sum(1 for r in ask if 'alert_shown' in r.get('checks', {}))}",
         "ask_avg_total_tokens": avg([r["usage"]["prompt_tokens"] + r["usage"]["completion_tokens"] for r in answered]),
         "ask_avg_prompt_tokens": avg([r["usage"]["prompt_tokens"] for r in answered]),
         "ask_avg_secs": avg([r["secs"] for r in answered]),
