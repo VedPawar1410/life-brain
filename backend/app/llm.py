@@ -1,14 +1,20 @@
-"""The only module that talks to the LLM.
+"""The only module that talks to LLMs.
 
-We use the standard `openai` SDK pointed at Groq's OpenAI-compatible endpoint, so the
-provider is pure config (LLM_BASE_URL / LLM_API_KEY / model names in .env).
+Providers are tried in order (settings.providers) until one is available:
+  groq   - the `openai` SDK pointed at Groq's OpenAI-compatible endpoint (free tier)
+  claude - the `anthropic` SDK, an optional paid fallback (only if ANTHROPIC_API_KEY is set)
+
+A provider is skipped only when it is *unavailable* (rate limit, connection error, 5xx) and
+only before any output has been produced, so an answer never mixes two models.
 """
 
 import json
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from functools import lru_cache
 
-from openai import APIError, OpenAI, RateLimitError
+import anthropic
+import openai
+from openai import OpenAI
 from pydantic import BaseModel, ValidationError
 
 from app.config import settings
@@ -89,6 +95,35 @@ def get_client() -> OpenAI:
     return OpenAI(base_url=settings.llm_base_url, api_key=settings.llm_api_key)
 
 
+@lru_cache
+def get_claude_client() -> anthropic.Anthropic:
+    return anthropic.Anthropic(api_key=settings.anthropic_api_key)
+
+
+class LLMUnavailable(Exception):
+    """Every provider in the chain was rate-limited or down."""
+
+
+def _is_unavailable(err: Exception) -> bool:
+    """Worth trying the next provider? Yes for rate limits, network errors and 5xx;
+    no for 4xx (a bad request would fail the same way everywhere)."""
+    if isinstance(err, (openai.RateLimitError, openai.APIConnectionError,
+                        anthropic.RateLimitError, anthropic.APIConnectionError)):
+        return True
+    return isinstance(err, (openai.APIStatusError, anthropic.APIStatusError)) and err.status_code >= 500
+
+
+def _chain(groq_models: list[str]) -> list[tuple[str, str]]:
+    """(provider, model) pairs in the order to try them."""
+    chain = []
+    for provider in settings.providers:
+        if provider == "groq":
+            chain += [("groq", model) for model in dict.fromkeys(groq_models)]  # de-duped, ordered
+        elif provider == "claude" and settings.anthropic_api_key:
+            chain.append(("claude", settings.claude_model))
+    return chain
+
+
 def _compact(entries: list[Entry]) -> str:
     """One short line per entry. Tokens matter: Groq's free tier allows ~8K tokens/minute."""
     if not entries:
@@ -116,14 +151,43 @@ def extract_entry(
     system = CAPTURE_SYSTEM_PROMPT.format(existing=_compact(existing))
     if context:
         system += FOLLOW_UP_CONTEXT.format(question=context[0], answer=context[1])
-    messages = [
-        {"role": "system", "content": system},
-        {"role": "user", "content": text},
-    ]
+
+    last_error: Exception | None = None
+    for provider, model in _chain([settings.capture_model]):
+        try:
+            return _extract_with(provider, model, system, text)
+        except (openai.APIError, anthropic.APIError) as err:
+            if not _is_unavailable(err):
+                raise
+            last_error = err
+    raise LLMUnavailable("All LLM providers are rate-limited or unavailable") from last_error
+
+
+def _extract_with(provider: str, model: str, system: str, text: str) -> CaptureDraft:
+    """One provider, validated with Pydantic and retried once on bad output."""
+    conversation = [{"role": "user", "content": text}]
     for attempt in range(2):
+        raw = _json_completion(provider, model, system, conversation)
+        try:
+            return CaptureDraft.model_validate(json.loads(raw))
+        except (json.JSONDecodeError, ValidationError) as err:
+            # Strict schemas should prevent this, but models occasionally slip. Feed the
+            # error back once so the model can correct itself, then give up.
+            if attempt == 1:
+                raise ValueError(f"LLM returned an invalid draft: {err}") from err
+            conversation += [
+                {"role": "assistant", "content": raw},
+                {"role": "user", "content": f"That was invalid ({err}). Reply with corrected JSON only."},
+            ]
+    raise AssertionError("unreachable")
+
+
+def _json_completion(provider: str, model: str, system: str, conversation: list[dict]) -> str:
+    """Raw JSON text constrained to CAPTURE_SCHEMA by the provider's structured output."""
+    if provider == "groq":
         response = get_client().chat.completions.create(
-            model=settings.capture_model,
-            messages=messages,
+            model=model,
+            messages=[{"role": "system", "content": system}, *conversation],
             response_format={
                 "type": "json_schema",
                 "json_schema": {"name": "entry_draft", "strict": True, "schema": CAPTURE_SCHEMA},
@@ -131,19 +195,19 @@ def extract_entry(
             reasoning_effort="low",  # extraction needs little; duplicates get a tag-overlap backstop
             temperature=0.2,
         )
-        raw = response.choices[0].message.content or ""
-        try:
-            return CaptureDraft.model_validate(json.loads(raw))
-        except (json.JSONDecodeError, ValidationError) as err:
-            # Strict mode should prevent this, but open models occasionally slip. Feed the
-            # error back once so the model can correct itself, then give up.
-            if attempt == 1:
-                raise ValueError(f"LLM returned an invalid draft: {err}") from err
-            messages += [
-                {"role": "assistant", "content": raw},
-                {"role": "user", "content": f"That was invalid ({err}). Reply with corrected JSON only."},
-            ]
-    raise AssertionError("unreachable")
+        return response.choices[0].message.content or ""
+
+    response = get_claude_client().messages.create(
+        model=model,
+        max_tokens=2000,  # cost cap; thinking counts toward it
+        system=system,
+        messages=conversation,
+        # No temperature: Haiku 5.5 rejects non-default sampling values with a 400.
+        output_config={"effort": "low", "format": {"type": "json_schema", "schema": CAPTURE_SCHEMA}},
+    )
+    if response.stop_reason == "refusal":
+        raise ValueError("Claude declined to structure this note")
+    return next((block.text for block in response.content if block.type == "text"), "")
 
 
 # --- Ask: question + the person's entries -> streamed advice ---------------------------
@@ -217,41 +281,60 @@ def _full(entries: list[Entry]) -> str:
 def stream_answer(question: str, entries: list[Entry]) -> Iterator[dict]:
     """Yield events: {"type": "meta"|"delta"|"done"|"error", ...}.
 
-    Falls back to the smaller model on a 429. That error arrives before any tokens are
-    streamed, so the retry is invisible to the user apart from the model name.
+    Tries each provider in the chain. Rate limits and outages surface before the first token,
+    so falling back is invisible to the user apart from the model name in `meta`.
     """
-    messages = [
-        {"role": "system", "content": ASK_SYSTEM_PROMPT.format(entries=_full(entries))},
-        {"role": "user", "content": question},
-    ]
-    stream = None
-    for model in dict.fromkeys([settings.ask_model, settings.fallback_model]):  # de-duped, ordered
+    system = ASK_SYSTEM_PROMPT.format(entries=_full(entries))
+    streamers: dict[str, Callable[[str, str, str], Iterator[dict]]] = {
+        "groq": _stream_groq, "claude": _stream_claude,
+    }
+    for position, (provider, model) in enumerate(_chain([settings.ask_model, settings.fallback_model])):
+        started = False
         try:
-            stream = get_client().chat.completions.create(
-                model=model,
-                messages=messages,
-                stream=True,
-                stream_options={"include_usage": True},
-                reasoning_effort="medium",
-                max_completion_tokens=2000,
-                extra_body={"include_reasoning": False},  # Groq: don't stream the model's thinking
-            )
-            break
-        except RateLimitError:
-            continue
-    if stream is None:
-        yield {"type": "error", "message": "Rate limit hit on all models, try again in a minute."}
-        return
+            for event in streamers[provider](model, system, question):
+                if not started:
+                    yield {"type": "meta", "model": model, "provider": provider, "fallback": position > 0}
+                    started = True
+                yield event
+            return
+        except (openai.APIError, anthropic.APIError) as err:
+            if started or not _is_unavailable(err):
+                yield {"type": "error", "message": f"LLM error: {err}"}
+                return
+    yield {"type": "error", "message": "Rate limit hit on all providers, try again in a minute."}
 
-    yield {"type": "meta", "model": model, "fallback": model != settings.ask_model}
+
+def _stream_groq(model: str, system: str, question: str) -> Iterator[dict]:
+    stream = get_client().chat.completions.create(
+        model=model,
+        messages=[{"role": "system", "content": system}, {"role": "user", "content": question}],
+        stream=True,
+        stream_options={"include_usage": True},
+        reasoning_effort="medium",
+        max_completion_tokens=2000,
+        extra_body={"include_reasoning": False},  # Groq: don't stream the model's thinking
+    )
     usage = None
-    try:
-        for chunk in stream:
-            if chunk.usage:
-                usage = {"prompt_tokens": chunk.usage.prompt_tokens, "completion_tokens": chunk.usage.completion_tokens}
-            if chunk.choices and chunk.choices[0].delta.content:
-                yield {"type": "delta", "text": chunk.choices[0].delta.content}
-    except APIError as err:
-        yield {"type": "error", "message": f"LLM error mid-answer: {err}"}
-        return
+    for chunk in stream:
+        if chunk.usage:
+            usage = {"prompt_tokens": chunk.usage.prompt_tokens, "completion_tokens": chunk.usage.completion_tokens}
+        if chunk.choices and chunk.choices[0].delta.content:
+            yield {"type": "delta", "text": chunk.choices[0].delta.content}
     yield {"type": "done", "usage": usage}
+
+
+def _stream_claude(model: str, system: str, question: str) -> Iterator[dict]:
+    with get_claude_client().messages.stream(
+        model=model,
+        max_tokens=4000,  # cost cap; thinking counts toward it
+        system=system,
+        messages=[{"role": "user", "content": question}],
+        output_config={"effort": "medium"},  # health answers deserve some thought
+    ) as stream:
+        for text in stream.text_stream:  # text only; thinking blocks are not streamed here
+            yield {"type": "delta", "text": text}
+        final = stream.get_final_message()
+    if final.stop_reason == "refusal":
+        yield {"type": "error", "message": "Claude declined to answer this question."}
+        return
+    yield {"type": "done", "usage": {"prompt_tokens": final.usage.input_tokens, "completion_tokens": final.usage.output_tokens}}

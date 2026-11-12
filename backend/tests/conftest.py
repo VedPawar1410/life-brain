@@ -1,17 +1,24 @@
 import json
 import os
+from contextlib import nullcontext
 from types import SimpleNamespace
 
 # Point the app at the test database *before* app modules create their engine.
 os.environ["DATABASE_URL"] = "postgresql+psycopg://localhost/life_brain_test"
+# Hermetic: never use a real Claude key from backend/.env (env vars beat .env). Tests that
+# need Claude install a fake client via the fake_claude fixture.
+os.environ["ANTHROPIC_API_KEY"] = ""
 
+import anthropic
 import httpx
+import httpx2
 import openai
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import text
 
 from app import llm
+from app.config import settings
 from app.db import Base, engine
 from app.main import app
 
@@ -83,3 +90,46 @@ def fake_llm(monkeypatch):
 def rate_limit_error():
     request = httpx.Request("POST", "https://api.groq.com/openai/v1/chat/completions")
     return openai.RateLimitError("slow down", response=httpx.Response(429, request=request), body=None)
+
+
+def claude_rate_limit_error():
+    request = httpx2.Request("POST", "https://api.anthropic.com/v1/messages")
+    return anthropic.RateLimitError("slow down", response=httpx2.Response(429, request=request), body=None)
+
+
+class FakeClaude:
+    """Stands in for anthropic.Anthropic. Replies: dict/str (create) or list of str (stream)."""
+
+    def __init__(self, *replies):
+        self.replies = list(replies)
+        self.calls = []
+        self.messages = SimpleNamespace(create=self._create, stream=self._stream)
+
+    def _next(self, kwargs):
+        self.calls.append(kwargs)
+        reply = self.replies.pop(0)
+        if isinstance(reply, Exception):
+            raise reply
+        return reply
+
+    def _create(self, **kwargs):
+        reply = self._next(kwargs)
+        text = reply if isinstance(reply, str) else json.dumps(reply)
+        content = [SimpleNamespace(type="thinking", thinking=""), SimpleNamespace(type="text", text=text)]
+        return SimpleNamespace(stop_reason="end_turn", content=content)
+
+    def _stream(self, **kwargs):
+        pieces = self._next(kwargs)
+        final = SimpleNamespace(stop_reason="end_turn", usage=SimpleNamespace(input_tokens=50, output_tokens=10))
+        return nullcontext(SimpleNamespace(text_stream=iter(pieces), get_final_message=lambda: final))
+
+
+@pytest.fixture
+def fake_claude(monkeypatch):
+    def install(*replies):
+        fake = FakeClaude(*replies)
+        monkeypatch.setattr(llm, "get_claude_client", lambda: fake)
+        monkeypatch.setattr(settings, "anthropic_api_key", "test-key")
+        return fake
+
+    return install
