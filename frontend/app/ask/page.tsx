@@ -149,7 +149,8 @@ export default function AskPage() {
           e.preventDefault();
           ask(question);
         }}
-        className="fixed inset-x-0 bottom-16 border-t border-line bg-background/95 backdrop-blur"
+        // Sits just above the bottom nav, which grows by the home-indicator inset.
+        className="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] border-t border-line bg-background/95 backdrop-blur"
       >
         <div className="mx-auto flex max-w-md gap-2 px-4 py-2">
           <input
