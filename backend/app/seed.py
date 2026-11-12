@@ -1,30 +1,20 @@
-"""Insert a few generic example entries into an empty brain: `uv run python -m app.seed`."""
+"""Load the demo brain into an empty database: `uv run python -m app.seed`.
+
+The demo brain is the synthetic 8-entry brain the eval uses (evals/cases.py), so what you
+try by hand is exactly what the eval measures. To keep your own brain untouched, point it
+at a separate database:
+
+    createdb life_brain_demo
+    DATABASE_URL=postgresql+psycopg://localhost/life_brain_demo uv run python -m app.seed
+"""
 
 from sqlalchemy import func, select
 
 from app.db import Base, SessionLocal, engine
 from app.models import Entry
+from evals.cases import BRAIN
 
-EXAMPLES = [
-    dict(
-        title="Getting soaked in the rain",
-        kind="routine",
-        situation="Come home wet from rain",
-        what_happens="Tend to get a sore throat the next day",
-        to_do=["Hot shower straight away", "Dry hair fully", "Warm ginger tea"],
-        to_avoid=["Sitting in wet clothes", "Cold drinks that evening"],
-        tags=["rain", "cold", "throat"],
-    ),
-    dict(
-        title="Banana followed by water",
-        kind="issue",
-        situation="Drinking water right after eating a banana",
-        what_happens="Bloating and mild stomach discomfort",
-        to_do=["Wait ~30 minutes before drinking water"],
-        to_avoid=["Gulping water right after fruit"],
-        tags=["food", "digestion"],
-    ),
-]
+FIELDS = ["title", "kind", "situation", "what_happens", "to_do", "to_avoid", "notes", "tags", "source_text"]
 
 
 def main() -> None:
@@ -33,9 +23,10 @@ def main() -> None:
         if db.scalar(select(func.count()).select_from(Entry)):
             print("Brain already has entries — skipping seed.")
             return
-        db.add_all(Entry(**e) for e in EXAMPLES)
+        # Copy the fields, not the ids: let Postgres assign ids so later inserts don't collide.
+        db.add_all(Entry(**{f: getattr(e, f) for f in FIELDS}) for e in BRAIN)
         db.commit()
-        print(f"Seeded {len(EXAMPLES)} example entries.")
+        print(f"Seeded {len(BRAIN)} demo entries.")
 
 
 if __name__ == "__main__":
